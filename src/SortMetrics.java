@@ -37,11 +37,11 @@ public class SortMetrics<T> {
     };
   }
 
-  void rightShift(T arr[], int index) {
+  void rightShift(T arr[], int indexStart, int indexEnd) {
     // a utility function that imagines that we need a hole at index i, and shifts
     // everything from index i to the right
 
-    for (int i = arr.length - 1; i > index; i--) {
+    for (int i = indexEnd; i > indexStart; i--) {
       copies++;
       arr[i] = arr[i - 1];
     }
@@ -52,6 +52,7 @@ public class SortMetrics<T> {
     while (leftPtr < rightPtr) {
       // midPtr is the ceil((leftPtr + rightPtr )/ 2)
       midPtr = ((leftPtr + rightPtr) % 2 == 0) ? (leftPtr + rightPtr) / 2 : ((leftPtr + rightPtr) / 2) + 1;
+      comparisions++;
       if (this.comparator.compare(arr[midPtr], x) > 0) {
         rightPtr = midPtr - 1;
       } else {
@@ -63,6 +64,10 @@ public class SortMetrics<T> {
 
   void swap(T[] arr, int i, int j) {
     // internally increment swaps
+    if (i == j) {
+      // no need to waste compute if they're the same
+      return;
+    }
     swaps++;
     T tmp = arr[i];
     arr[i] = arr[j];

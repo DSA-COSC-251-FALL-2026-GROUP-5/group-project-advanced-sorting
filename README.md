@@ -44,3 +44,8 @@ Introduction
 - [] Conclusion and findings
 
 Project requirement is linked [here](./assignment.pdf).
+
+# Notes
+
+- [timsort](https://mail.python.org/pipermail/python-dev/2002-July/026837.html)
+- [worst case complexity of timsort](https://arxiv.org/abs/1805.08612)

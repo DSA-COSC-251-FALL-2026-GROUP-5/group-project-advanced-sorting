@@ -1,7 +1,7 @@
 import java.util.Comparator;
 
-class SelectionSort<T> extends Sort<T> {
+public class SelectionSort<T> extends Sort<T> {
   @Override
-  void sort(T[] arr, Comparator<T> comparator) {
+  void sort(T[] arr, SortMetrics<T> sortMetrics) {
   }
 }

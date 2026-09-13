@@ -1,0 +1,11 @@
+{
+  "metadata" : {
+    "swaps" : 8,
+    "comparisons" : 28,
+    "copies" : 0,
+    "runTime" : 390084,
+    "datasetSize" : 8
+  },
+  "unsortedArr" : [3, 4, 5, 1, 17, 100, 1, 222],
+  "sortedArr" : [1, 1, 3, 4, 5, 17, 100, 222],
+}

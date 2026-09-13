@@ -5,21 +5,23 @@ import java.nio.file.Path;
 import java.io.IOException;
 
 /*
-- [] dataset size
-- [] runtime
-- [] number of comparisons
-- [] number of swaps
-- [] any other meaningful metrics
+- [x] dataset size
+- [x] runtime
+- [x] number of comparisons
+- [x] number of swaps
+- [x] any other meaningful metrics
  */
 
 public class SortMetrics<T> {
   private long swaps = 0;
   private long comparisions = 0;
+  private long copies = 0; // NOTE: this is for insertion
   private long startTime = 0;
   private long endTime = 0;
   private long runTime = 0;
   private long datasetSize = 0;
-  T arr[];
+  T unsortedArr[];
+  T sortedArr[];
   Comparator<T> comparator;
 
   SortMetrics(Comparator<T> comparator) {
@@ -35,6 +37,30 @@ public class SortMetrics<T> {
     };
   }
 
+  void rightShift(T arr[], int index) {
+    // a utility function that imagines that we need a hole at index i, and shifts
+    // everything from index i to the right
+
+    for (int i = arr.length - 1; i > index; i--) {
+      copies++;
+      arr[i] = arr[i - 1];
+    }
+  }
+
+  int binarySearch(T arr[], T x, int leftPtr, int rightPtr) {
+    int midPtr;
+    while (leftPtr < rightPtr) {
+      // midPtr is the ceil((leftPtr + rightPtr )/ 2)
+      midPtr = ((leftPtr + rightPtr) % 2 == 0) ? (leftPtr + rightPtr) / 2 : ((leftPtr + rightPtr) / 2) + 1;
+      if (this.comparator.compare(arr[midPtr], x) > 0) {
+        rightPtr = midPtr - 1;
+      } else {
+        leftPtr = midPtr;
+      }
+    }
+    return rightPtr;
+  }
+
   void swap(T[] arr, int i, int j) {
     // internally increment swaps
     swaps++;
@@ -46,6 +72,7 @@ public class SortMetrics<T> {
   void resetMetrics() {
     swaps = 0;
     comparisions = 0;
+    copies = 0;
     startTime = 0;
     endTime = 0;
     runTime = 0;
@@ -53,32 +80,38 @@ public class SortMetrics<T> {
   }
 
   void runSort(T arr[], Sort<T> sortType) {
+    this.unsortedArr = arr.clone();
     startTime = System.nanoTime();
     sortType.sort(arr, this);
     endTime = System.nanoTime();
     runTime = endTime - startTime;
-    this.arr = arr;
+    this.sortedArr = arr.clone();
     this.datasetSize = arr.length;
   }
 
   String getJsonContent() {
-    String arrAsString = arr == null ? "[]" : Arrays.toString(arr);
+    String unsortedArrAsString = unsortedArr == null ? "[]" : Arrays.toString(unsortedArr);
+    String sortedArrAsString = sortedArr == null ? "[]" : Arrays.toString(sortedArr);
     return """
         {
-          {
-          "swaps" : %d,
-          "comparisons" : %d,
-          "runTime" : %d,
-          "datasetSize" : %d
+          "metadata" : {
+            "swaps" : %d,
+            "comparisons" : %d,
+            "copies" : %d,
+            "runTime" : %d,
+            "datasetSize" : %d
           },
-        %s
+          "unsortedArr" : %s,
+          "sortedArr" : %s,
         }
-        """.formatted(
+            """.formatted(
         swaps,
         comparisions,
+        copies,
         runTime,
         datasetSize,
-        arrAsString);
+        unsortedArrAsString,
+        sortedArrAsString);
   }
 
   void writeToFile(String path) {

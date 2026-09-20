@@ -1,8 +1,13 @@
 import java.util.Comparator;
 
 public class BubbleSort<T> extends Sort<T> {
+
+  BubbleSort(SortMetrics<T> sortMetrics) {
+    super(sortMetrics);
+  }
+
   @Override
-  void sort(T[] arr, SortMetrics<T> sortMetrics) {
+  void sort(T[] arr) {
     for (int i = 0; i < arr.length; i++) {
       for (int j = 0; j < (arr.length - i - 1); j++) {
         if (sortMetrics.comparator.compare(arr[j + 1], arr[j]) >= 0) {

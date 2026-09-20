@@ -15,7 +15,7 @@ import java.io.IOException;
 public class SortMetrics<T> {
   private long swaps = 0;
   private long comparisions = 0;
-  private long copies = 0; // NOTE: this is for insertion
+  private long copies = 0;
   private long startTime = 0;
   private long endTime = 0;
   private long runTime = 0;
@@ -171,7 +171,7 @@ public class SortMetrics<T> {
   void runSort(T arr[], Sort<T> sortType) {
     this.unsortedArr = arr.clone();
     startTime = System.nanoTime();
-    sortType.sort(arr, this);
+    sortType.sort(arr);
     endTime = System.nanoTime();
     runTime = endTime - startTime;
     this.sortedArr = arr.clone();

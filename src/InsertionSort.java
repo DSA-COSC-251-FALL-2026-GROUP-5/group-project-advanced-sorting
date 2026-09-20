@@ -2,8 +2,13 @@ import java.util.Comparator;
 import java.util.Arrays;
 
 public class InsertionSort<T> extends Sort<T> {
+
+  InsertionSort(SortMetrics<T> sortMetrics) {
+    super(sortMetrics);
+  }
+
   @Override
-  void sort(T[] arr, SortMetrics<T> sortMetrics) {
+  void sort(T[] arr) {
     // TODO: fix this
     int insertionIndex;
     int foundIndex;

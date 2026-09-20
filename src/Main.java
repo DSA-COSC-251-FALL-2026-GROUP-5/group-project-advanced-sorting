@@ -32,11 +32,16 @@ class Main {
 
     SortMetrics<Integer> sortMetrics = new SortMetrics<Integer>(Integer::compare);
 
-    Integer arr[] = { 2 };
+    Integer arr[] = { 2, 4, 6, 1, 3, 5, 7 };
 
     Integer tmpArr[] = new Integer[arr.length];
 
-    sortMetrics.merge(arr, tmpArr, 0, 0, 0, 0);
+    sortMetrics.merge(arr, tmpArr, 0, 2, 3, arr.length - 1);
+
+    System.out.println(sortMetrics.getJsonContent());
+    System.out.println(Arrays.toString(arr));
+
+    sortMetrics.reverse(arr, tmpArr, 0, arr.length - 1);
 
     System.out.println(sortMetrics.getJsonContent());
     System.out.println(Arrays.toString(arr));

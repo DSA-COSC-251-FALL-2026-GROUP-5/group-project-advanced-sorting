@@ -84,6 +84,78 @@ public class SortMetrics<T> {
     datasetSize = 0;
   }
 
+  void merge(T arr[], T tmpArr[], int leftPtr1, int rightPtr1, int leftPtr2, int rightPtr2) {
+    // This function will treat leftPtr1 to rightPtr1 as one array that's sorted,
+    // and leftPtr2 to rightPtr2 as another subarray that's sorted, and it will
+    // merge.
+    //
+    // We need that leftPtr1 <= rightPtr1 < leftPtr2 <= rightPtr2
+    //
+    // Moreover, we need that all of the variables are in range of the array
+    //
+    // We also assume that the subarray 1 and subarray 2 is neighboring subarrays,
+    // meaning that they can be merged to
+    //
+    // I will also assume that the temporary array has length, exactly equals to
+    // I won't enforce those conditions as exceptions to try to simplify things
+    //
+    // NOTE: the reason why we're passing in a tmpArr is because: - it's actually
+    // kinda hard to initialize an array of a generic type
+    // - i think it's going to save us some time because memory allocation and
+    // deallocationn takes some time due to syscalls or something
+
+    for (int i = leftPtr1; i <= rightPtr2; i++) {
+      tmpArr[i] = arr[i];
+      copies++;
+    }
+
+    int ptr1 = leftPtr1;
+    int ptr2 = leftPtr2;
+
+    // mainPtr will be the pointer where we write onto in the main array. It
+    // actually can be derived from ptr1 and ptr2 because, it's something like (ptr1
+    // - leftPtr1) + (ptr2 - leftPtr2), but we'll explicitly store it
+
+    int mainPtr = leftPtr1;
+    // ptr1 and ptr2 will keep track of where we're currently at on the merging
+    // stage
+
+    while ((ptr1 <= rightPtr1) && (ptr2 <= rightPtr2)) {
+      if (comparator.compare(tmpArr[ptr1], tmpArr[ptr2]) <= 0) {
+        // meaning if tmpArr[ptr1] <= tmpArr[ptr2] (i think this will maintain
+        // stability)
+        arr[mainPtr] = tmpArr[ptr1];
+        ptr1++;
+      } else {
+        arr[mainPtr] = tmpArr[ptr2];
+        ptr2++;
+      }
+      copies++;
+      mainPtr++;
+    }
+
+    // do take the tail and place it in the main array
+
+    for (int i = ptr1; i <= rightPtr1; i++) {
+      arr[mainPtr] = tmpArr[ptr1];
+      ptr1++;
+      mainPtr++;
+      copies++;
+    }
+
+    for (int i = ptr2; i <= rightPtr2; i++) {
+      arr[mainPtr] = tmpArr[ptr2];
+      ptr2++;
+      mainPtr++;
+      copies++;
+    }
+  }
+
+  void reverseSubArray(T arr[], int leftPtr, int rightPtr) {
+    // reverse a subarray
+
+  }
+
   void runSort(T arr[], Sort<T> sortType) {
     this.unsortedArr = arr.clone();
     startTime = System.nanoTime();

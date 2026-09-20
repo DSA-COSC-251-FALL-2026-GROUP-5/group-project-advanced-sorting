@@ -49,3 +49,14 @@ Project requirement is linked [here](./assignment.pdf).
 
 - [timsort](https://mail.python.org/pipermail/python-dev/2002-July/026837.html)
 - [worst case complexity of timsort](https://arxiv.org/abs/1805.08612)
+
+## Merge sort implementation
+
+A typical merge sort implementation goes as follows:
+
+- we first have an unsorted array
+- at every step, we have two pointers pointing to where the subarray starts and where the subarray ends
+- we recursively call merge sort on the left half and the right half until the subarray is of length 1 or less
+- we then call merge on the subarray by passing the pointers to the left sub array and the pointers to the right subarray as arguments
+
+

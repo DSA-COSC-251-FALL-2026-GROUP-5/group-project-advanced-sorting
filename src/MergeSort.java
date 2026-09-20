@@ -1,5 +1,3 @@
-import java.util.Comparator;
-
 public class MergeSort<T> extends Sort<T> {
   T[] tmpArr;
 

@@ -1,5 +1,3 @@
-import java.util.Comparator;
-
 public class SelectionSort<T> extends Sort<T> {
 
   SelectionSort(SortMetrics<T> sortMetrics) {

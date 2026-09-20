@@ -1,5 +1,3 @@
-import java.util.Comparator;
-
 public class BubbleSort<T> extends Sort<T> {
 
   BubbleSort(SortMetrics<T> sortMetrics) {

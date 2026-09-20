@@ -23,6 +23,7 @@ public class SortMetrics<T> {
   T unsortedArr[];
   T sortedArr[];
   Comparator<T> comparator;
+  int sign = 1;
 
   SortMetrics(Comparator<T> comparator) {
     this.comparator = new Comparator<T>() {
@@ -31,10 +32,26 @@ public class SortMetrics<T> {
         // compare is 1 when a > b and -1 when a < b. 0 is probably when a == b
         comparisions++;
         // to prevent null
-        return Comparator.nullsLast(comparator).compare(a, b);
-
+        return sign * Comparator.nullsLast(comparator).compare(a, b);
       }
     };
+  }
+
+  void toggleSign() {
+    // this is used to sort things in ascending or descending order
+    sign = -sign;
+  }
+
+  void setSign(int sign) {
+    if (sign != -1 || sign != 1) {
+      throw new IllegalArgumentException("sign must be either 1 for ascending order, or -1 for descending order");
+    }
+    this.sign = sign;
+  }
+
+  void incrementCopies() {
+    // increment the copies variable
+    copies++;
   }
 
   void rightShift(T arr[], int indexStart, int indexEnd) {

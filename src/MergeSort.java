@@ -13,15 +13,13 @@ public class MergeSort<T> extends Sort<T> {
   }
 
   void mergeSort(T[] arr, T[] tmpArr, int leftPtr, int rightPtr) {
-    if (rightPtr - leftPtr <= 1) {
+    if ((rightPtr + 1) - leftPtr <= 1) {
       // if sub array is of size 0 or 1, it's trivially sorted
       return;
     }
 
     // also, at this stage, the array is of length 2 or greater, so, midPtr <
-    // rightPtr always from here
-
-    // otherwise, we split it into two
+    // rightPtr always from here otherwise, we split it into two
     int midPtr = (leftPtr + rightPtr) / 2;
     // midPtr is now the floor of (leftPtr + rightPtr)/2
 
@@ -30,6 +28,8 @@ public class MergeSort<T> extends Sort<T> {
 
     // then we mergeSort the right half
     mergeSort(arr, tmpArr, midPtr + 1, rightPtr);
+
+    System.out.printf("leftPtr: %d, midPtr: %d, rightPtr: %d\n", leftPtr, midPtr, rightPtr);
 
     // then we merge them
     sortMetrics.merge(arr, tmpArr, leftPtr, midPtr, midPtr + 1, rightPtr);

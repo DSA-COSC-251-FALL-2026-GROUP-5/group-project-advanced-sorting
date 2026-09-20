@@ -151,20 +151,12 @@ public class SortMetrics<T> {
     }
   }
 
-  void reverse(T arr[], T tmpArr[], int leftPtr, int rightPtr) {
-    // reverse a subarray
-
-    // first copy the subarray to the temporary array
-    for (int i = leftPtr; i <= rightPtr; i++) {
-      tmpArr[i] = arr[i];
-      copies++;
-    }
-
-    // now write it back to the main a array in reverse order
-
-    for (int i = leftPtr; i <= rightPtr; i++) {
-      arr[i] = tmpArr[rightPtr - (i - leftPtr)];
-      copies++;
+  void reverse(T arr[], int leftPtr, int rightPtr) {
+    // reverse a subarray by swapping
+    while (leftPtr < rightPtr) {
+      swap(arr, leftPtr, rightPtr);
+      leftPtr++;
+      rightPtr--;
     }
   }
 

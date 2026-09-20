@@ -29,8 +29,6 @@ public class MergeSort<T> extends Sort<T> {
     // then we mergeSort the right half
     mergeSort(arr, tmpArr, midPtr + 1, rightPtr);
 
-    System.out.printf("leftPtr: %d, midPtr: %d, rightPtr: %d\n", leftPtr, midPtr, rightPtr);
-
     // then we merge them
     sortMetrics.merge(arr, tmpArr, leftPtr, midPtr, midPtr + 1, rightPtr);
   }

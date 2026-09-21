@@ -1,2 +1,2 @@
-public record Run(int base, int length) {
+public record Run(int startIndex, int length) {
 }

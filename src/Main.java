@@ -63,9 +63,14 @@ class Main {
      */
 
     SortMetrics<Integer> sortMetrics = new SortMetrics<Integer>(Integer::compare);
-    Integer arr[] = { 4, 3, 2, 1, 1, 2, 5, 11, 11, 6, 7 };
+    Integer arr[] = { 1, 3, 5, 7,
+        2, 4, 6, 8,
+        1, 3, 5
+    };
     System.out.println(Arrays.toString(arr));
-    TimSort<Integer> timSort = new TimSort<Integer>(sortMetrics, 64, new Integer[arr.length]);
-    System.out.println(timSort.findRun(arr, 9));
+    TimSort<Integer> timSort = new TimSort<Integer>(sortMetrics, 3, new Integer[arr.length]);
+    // System.out.println(timSort.findRun(arr, 9));
+    timSort.sort(arr);
+    System.out.println(Arrays.toString(arr));
   }
 }

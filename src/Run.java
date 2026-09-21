@@ -1,2 +1,2 @@
-public record Run(int startIndex, int length) {
+public record Run(int startIndex, int length, boolean isAscending) {
 }

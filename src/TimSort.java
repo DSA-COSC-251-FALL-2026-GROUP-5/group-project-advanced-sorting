@@ -30,7 +30,7 @@ public class TimSort<T> extends Sort<T> {
 
     if (currentIndex == arr.length - 1) {
       // TODO: fix off-by-one error on this one
-      return new Run(startIndex, currentIndex - startIndex + 1);
+      return new Run(startIndex, currentIndex - startIndex + 1, true);
       // if startIndex haven't moved, then we have an array of sized 1, although, that
       // would be kinda useless, but it might happen if we were to reach the end of
       // the array
@@ -76,17 +76,11 @@ public class TimSort<T> extends Sort<T> {
       sortMetrics.toggleSign();
     }
 
-    return new Run(startIndex, currentIndex - startIndex + 1);
+    return new Run(startIndex, currentIndex - startIndex + 1, isAscending);
   }
 
   void mergeTopTwoRun(T arr[]) {
     // merges s[n] with s[n - 2] and then updates the runStack
-    System.out.printf("start1: %d, end1: %d, start2: %d, end2: %d\n",
-        runStack[runStackPtr - 1].startIndex(),
-        runStack[runStackPtr - 1].startIndex() + runStack[runStackPtr - 1].length() - 1,
-        runStack[runStackPtr].startIndex(),
-        runStack[runStackPtr].startIndex() + runStack[runStackPtr].length() - 1);
-
     sortMetrics.merge(arr,
         tmpArr,
         runStack[runStackPtr - 1].startIndex(),
@@ -95,7 +89,7 @@ public class TimSort<T> extends Sort<T> {
         runStack[runStackPtr].startIndex() + runStack[runStackPtr].length() - 1);
 
     Run mergedRun = new Run(runStack[runStackPtr - 1].startIndex(),
-        runStack[runStackPtr - 1].length() + runStack[runStackPtr].length());
+        runStack[runStackPtr - 1].length() + runStack[runStackPtr].length(), true);
 
     // set unused to null to make it easier for debugging
     runStack[runStackPtr] = null;
@@ -113,7 +107,7 @@ public class TimSort<T> extends Sort<T> {
         runStack[runStackPtr - 1].startIndex() + runStack[runStackPtr - 1].length() - 1);
 
     Run mergedRun = new Run(runStack[runStackPtr - 2].startIndex(),
-        runStack[runStackPtr - 2].length() + runStack[runStackPtr - 1].length());
+        runStack[runStackPtr - 2].length() + runStack[runStackPtr - 1].length(), true);
 
     // so we're going to need to do something weird here. Since we've combined s[n -
     // 1] and s[n - 2] into one, we'll first store the merged thing inside of s[n -
@@ -139,17 +133,19 @@ public class TimSort<T> extends Sort<T> {
     // specific. We just assume that the runStack has already been initialized,
     // meaning that mergeCollapse is a function that should only be called in the
     // `sort` method
-    while (runStack.length >= 3) {
-      // so if it's at least 3, then we can begin checking the invariance and
-      // repairing it
+    while (runStackPtr >= 2) {
+      // if the last element of the stack is at index 2, then we have enough to
+      // continue here
 
+      // the first invariance states that s[n] + s[n - 1] < s[n - 2]
       boolean firstInvarianceMet = (runStack[runStackPtr].length()
           + runStack[runStackPtr - 1].length()) < runStack[runStackPtr - 2].length();
+
+      // second invariance states that s[n] < s[n - 1]
       boolean secondInvarianceMet = runStack[runStackPtr].length() < runStack[runStackPtr - 1].length();
 
       // we view it as if we're trying to sort in ascending
       if (firstInvarianceMet && secondInvarianceMet) {
-        // the first invariance states that s[n] + s[n - 1] < s[n - 2]
         // if the first invariance is met, then we need to consider the second
         // invariance
         break;
@@ -179,6 +175,28 @@ public class TimSort<T> extends Sort<T> {
           mergeTopTwoRun(arr);
         }
       }
+    }
+
+    // when we have 2 elements in the stack, we should still repair the
+    // second invariance
+    if (runStackPtr == 1 && (runStack[runStackPtr].length() >= runStack[runStackPtr - 1].length())) {
+      // so if we have something like:
+      // #############
+      // #####
+      //
+      // then repair it by merging it
+
+      // System.out.printf("merged run: %s with %s\n", runStack[runStackPtr],
+      // runStack[runStackPtr - 1]);
+      mergeTopTwoRun(arr);
+    }
+  }
+
+  void mergeForceCollapse(T arr[]) {
+    // force merge collapse just repeatedly merge s[n] with s[n - 1] until the run
+    // is of size 1
+    while (runStackPtr > 0) {
+      mergeTopTwoRun(arr);
     }
   }
 
@@ -211,37 +229,77 @@ public class TimSort<T> extends Sort<T> {
 
     while (runPtr <= arr.length - 1) {
       Run run = findRun(arr, runPtr);
+      int endIndex;
       if (run.length() < minRun && (run.startIndex() + run.length()) < arr.length) {
         // if run.startIndex() + run.length() >= arr.length, then we know that `run` is
         // actually the subarray on the edge, so we don't need to extend it by sorting
         // or anything, we can just add that to the to the `runStack`
 
         // we still need to be careful of boundary conditions
-        int endIndex = Math.min(run.startIndex() + minRun - 1, arr.length - 1);
+        endIndex = Math.min(run.startIndex() + minRun - 1, arr.length - 1);
+
+        // if the run is descending, then sort it in descending order
+        if (!run.isAscending()) {
+          sortMetrics.toggleSign();
+        }
+
         insertionSort.sortSubarray(arr, run.startIndex(), endIndex);
-        run = new Run(run.startIndex(), endIndex - run.startIndex() + 1);
-        runPtr = endIndex + 1;
+
+        if (!run.isAscending()) {
+          sortMetrics.toggleSign();
+        }
+
+        run = new Run(run.startIndex(), endIndex - run.startIndex() + 1, run.isAscending());
       } else {
-        runPtr += run.length();
+        endIndex = runPtr + run.length() - 1;
       }
+
+      // reverse it if it's in descending order
+      if (!run.isAscending()) {
+        /*
+         * System.out.println("reversing... our subarray is: ");
+         * for (int i = runPtr; i <= endIndex; i++) {
+         * System.out.printf("%d, ", arr[i]);
+         * }
+         * System.out.println();
+         */
+        sortMetrics.reverse(arr, runPtr, endIndex);
+        run = new Run(run.startIndex(), run.length(), true);
+      }
+
+      runPtr = endIndex + 1;
 
       // we store it in the discoveredRun array, which we will loop through afterwards
       discoveredRunPtr++;
       discoveredRun[discoveredRunPtr] = run;
     }
 
+    /*
+     * for (int i = 0; i <= discoveredRunPtr; i++) {
+     * System.out.println(discoveredRun[i]);
+     * }
+     * 
+     * System.out.println(Arrays.toString(arr));
+     */
+
     // now we're in the mergeCollapse stage, where we begin pushing things into the
     // runStack, while preserving our invariance
+
+    // System.out.println(Arrays.toString(discoveredRun));
 
     for (int i = 0; i <= discoveredRunPtr; i++) {
       runStackPtr++;
       runStack[runStackPtr] = discoveredRun[i];
+      mergeCollapse(arr);
     }
 
-    System.out.println(Arrays.toString(runStack));
-    mergeBottomTwoRun(arr);
-    mergeTopTwoRun(arr);
-    System.out.println(Arrays.toString(runStack));
+    /*
+     * for (int i = 0; i <= runStackPtr; i++) {
+     * System.out.println(runStack[i]);
+     * }
+     */
+
+    mergeForceCollapse(arr);
 
     // at the end of the algorithm, change the pointer to null so that the garbage
     // collector can take care of the rest

@@ -16,17 +16,17 @@ public class TimSort<T> extends Sort<T> {
     this.minRun = minRun;
   }
 
-  Run findRun(T[] arr, int startIndex) {
+  public Run findRun(T[] arr, int startIndex) {
     int currentIndex = startIndex;
     // currentIndex will need a lee-way of around 1 element, so i can only allow
     // currentIndex to be at most at arr.length - 2. I hope this breaks when it
     // reaches the end
-    while ((currentIndex < (arr.length - 2))
+    while ((currentIndex <= (arr.length - 2))
         && (sortMetrics.comparator.compare(arr[currentIndex], arr[currentIndex + 1]) == 0)) {
       currentIndex++;
     }
 
-    if (currentIndex >= arr.length - 1) {
+    if (currentIndex == arr.length - 1) {
       // TODO: fix off-by-one error on this one
       return new Run(startIndex, currentIndex - startIndex + 1);
       // if startIndex haven't moved, then we have an array of sized 1, although, that
@@ -53,6 +53,28 @@ public class TimSort<T> extends Sort<T> {
     // descending is relative on whether we've toggled the sign before, we assume
     // that ascending and descending is when we haven't toggled the sign)
 
+    if (!isAscending) {
+      sortMetrics.toggleSign();
+    }
+
+    // essentially, we toggle it so that the logic becomes the same, whether it's
+    // decreasing or increasing, but we look at it as if isAscending is true
+
+    while ((currentIndex <= (arr.length - 2))
+        && (sortMetrics.comparator.compare(arr[currentIndex + 1], arr[currentIndex]) >= 0)) {
+      currentIndex++;
+    }
+
+    // if it breaks, then currentIndex will point to either the last index of the
+    // array, or the last index of the run, so, its length will be currentIndex -
+    // startIndex + 1
+
+    // toggle it back to prevent side effects (it's a bit scuff, but i'm lazy)
+    if (!isAscending) {
+      sortMetrics.toggleSign();
+    }
+
+    return new Run(startIndex, currentIndex - startIndex + 1);
   }
 
   @Override

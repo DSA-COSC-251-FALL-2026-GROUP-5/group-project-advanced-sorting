@@ -116,8 +116,8 @@ public class SortMetrics<T> {
     // I will also assume that the temporary array has length, exactly equals to
     // I won't enforce those conditions as exceptions to try to simplify things
     //
-    // NOTE: the reason why we're passing in a tmpArr is because: - it's actually
-    // kinda hard to initialize an array of a generic type
+    // NOTE: the reason why we're passing in a tmpArr is because:
+    // - it's actually kinda hard to initialize an array of a generic type
     // - i think it's going to save us some time because memory allocation and
     // deallocationn takes some time due to syscalls or something
 

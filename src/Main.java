@@ -52,11 +52,20 @@ class Main {
      * 
      */
 
-    SortMetrics<Integer> sortMetrics = new SortMetrics<Integer>(Integer::compare);
+    /*
+     * SortMetrics<Integer> sortMetrics = new
+     * SortMetrics<Integer>(Integer::compare);
+     * Integer arr[] = { 10, 2, 11, 123, 111, 88, 90, 80, 70 };
+     * InsertionSort<Integer> insertionSort = new
+     * InsertionSort<Integer>(sortMetrics);
+     * insertionSort.sort(arr);
+     * System.out.println(Arrays.toString(arr));
+     */
 
-    Integer arr[] = { 10, 2, 11, 123, 111, 88, 90, 80, 70 };
-    InsertionSort<Integer> insertionSort = new InsertionSort<Integer>(sortMetrics);
-    insertionSort.sort(arr);
+    SortMetrics<Integer> sortMetrics = new SortMetrics<Integer>(Integer::compare);
+    Integer arr[] = { 4, 3, 2, 1, 1, 2, 5, 11, 11, 6, 7 };
     System.out.println(Arrays.toString(arr));
+    TimSort<Integer> timSort = new TimSort<Integer>(sortMetrics, 64, new Integer[arr.length]);
+    System.out.println(timSort.findRun(arr, 9));
   }
 }

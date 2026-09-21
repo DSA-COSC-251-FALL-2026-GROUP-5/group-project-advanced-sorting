@@ -1,14 +1,20 @@
+import java.util.Arrays;
+
 class Main {
   public static void main(String[] args) {
 
-    SortMetrics<Integer> sortMetrics = new SortMetrics<Integer>(Integer::compare);
-
-    Integer arr[] = { 3, 4, 5, 17, 100, 1, 222, 2, 2, 2 };
-
-    // Integer arr[] = {};
-    sortMetrics.toggleSign();
-    sortMetrics.runSort(arr, new MergeSort<Integer>(sortMetrics, new Integer[arr.length]));
-    System.out.println(sortMetrics.getJsonContent());
+    /*
+     * SortMetrics<Integer> sortMetrics = new
+     * SortMetrics<Integer>(Integer::compare);
+     * 
+     * Integer arr[] = { 3, 4, 5, 17, 100, 1, 222, 2, 2, 2 };
+     * 
+     * // Integer arr[] = {};
+     * sortMetrics.toggleSign();
+     * sortMetrics.runSort(arr, new MergeSort<Integer>(sortMetrics, new
+     * Integer[arr.length]));
+     * System.out.println(sortMetrics.getJsonContent());
+     */
 
     /*
      * SortMetrics<Integer> sortMetrics = new
@@ -45,5 +51,12 @@ class Main {
      * System.out.println(Arrays.toString(arr));
      * 
      */
+
+    SortMetrics<Integer> sortMetrics = new SortMetrics<Integer>(Integer::compare);
+
+    Integer arr[] = { 10, 2, 11, 123, 111, 88, 90, 80, 70 };
+    InsertionSort<Integer> insertionSort = new InsertionSort<Integer>(sortMetrics);
+    insertionSort.sort(arr);
+    System.out.println(Arrays.toString(arr));
   }
 }

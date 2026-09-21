@@ -1,3 +1,5 @@
+# Usage
+
 # TODO
 
 ## Coding side
@@ -185,3 +187,59 @@ Then it wouldn't be satisifed, so we would merge:
 ```
 
 And if we continued getting the same sample, we would continue increasing the top, which is what we wanted. I think this behavior is favorable. If we assume that the bottom already has the invariant, then we can resolve the invariant when you get a push is one swoop, because, the reason why the invariant broke was because you inserted something that's too small, so, if it is already the case that the invariant is already met, then if you were to say, merge the small subarray you pushed with `s[n - 1]`, then it would still satisfy the first condition, but perhaps the second condition would be violated, so I guess you'd need the `while invariantMet` thing.
+
+### Actual merge collapse implementation
+
+So `mergeCollapse` aims to make the stack preserve the invariant. Using the algorithm we'll implement, here's what we'll do:
+
+Let's say that we have:
+
+```
+##############
+########################################
+```
+
+Then we add:
+
+
+```
+#####
+##############
+########################################
+```
+
+Great, no invariance broken, nothing happens.
+
+Now, let's say we add something that breaks the invariance:
+
+```
+#########################
+#####
+##############
+########################################
+```
+
+Now, what are we going to do? Well, we'll merge the `s[n-1]` with `s[n]` or `s[n - 2]`, which every one is smaller.
+
+```
+#########################
+###################
+########################################
+```
+
+Now is the invariant good? No, because first of all, the condition `s[n] + s[n-1] < s[n-2]` isn't met in this case. So again, we merge the first with the second:
+
+```
+############################################
+########################################
+```
+
+Now is the invariance met? No, so what we do is we merge the two together:
+
+```
+####################################################################################
+```
+
+so essentially, we need to split it into the case when the length is 1, and when the length is greater or equals to 2.
+
+In the case that the stack is empty, or there is only one element, the invariance is automatically met.

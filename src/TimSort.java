@@ -16,6 +16,45 @@ public class TimSort<T> extends Sort<T> {
     this.minRun = minRun;
   }
 
+  Run findRun(T[] arr, int startIndex) {
+    int currentIndex = startIndex;
+    // currentIndex will need a lee-way of around 1 element, so i can only allow
+    // currentIndex to be at most at arr.length - 2. I hope this breaks when it
+    // reaches the end
+    while ((currentIndex < (arr.length - 2))
+        && (sortMetrics.comparator.compare(arr[currentIndex], arr[currentIndex + 1]) == 0)) {
+      currentIndex++;
+    }
+
+    if (currentIndex >= arr.length - 1) {
+      // TODO: fix off-by-one error on this one
+      return new Run(startIndex, currentIndex - startIndex + 1);
+      // if startIndex haven't moved, then we have an array of sized 1, although, that
+      // would be kinda useless, but it might happen if we were to reach the end of
+      // the array
+    }
+
+    // ok so we now know that there's actually something at currentIndex + 1, so we
+    // can safely index it
+
+    boolean isAscending;
+    // the reason why the while loop broke was because arr[currentIndex] !=
+    // arr[currentIndex + 1]
+
+    isAscending = sortMetrics.comparator.compare(arr[currentIndex + 1], arr[currentIndex]) > 0;
+    // if it's greater than zero, then treat it as ascending:
+    // NOTE: essentially, the .compare might switch signs depending on whether we've
+    // called toggleSign or setSign. Essentially, we can assume that the .compare
+    // hasn't been modified and do as follows. I think it will actually be fine even
+    // when you toggle the sign, it's just that everything will be in reverse order
+
+    // TODO: now we need to find the runs based on whether it's ascending or
+    // descending, perhaps a sign toggle is all we need (also, ascending and
+    // descending is relative on whether we've toggled the sign before, we assume
+    // that ascending and descending is when we haven't toggled the sign)
+
+  }
+
   @Override
   void sort(T[] arr) {
     // the first step we do is to initialize an array that's of size that's at least

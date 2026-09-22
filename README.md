@@ -17,7 +17,7 @@
   - [x] any other meaningful metrics
 ~~- [x] logging should be implemented in `Sort.java`~~
 ~~- [] write a small CLI to use different sorting algorithms I guess~~
-- [] compare it to different sorting algorithms
+- [x] compare it to different sorting algorithms
 
 ## Research report and presentation slides
 
@@ -35,6 +35,7 @@
 ## Research report
 
 Introduction
+
 - [] Algorithm explanation with examples
 - [] Time complexity analysis
 - [] Java implementation
@@ -243,3 +244,12 @@ Now is the invariance met? No, so what we do is we merge the two together:
 so essentially, we need to split it into the case when the length is 1, and when the length is greater or equals to 2.
 
 In the case that the stack is empty, or there is only one element, the invariance is automatically met.
+
+# AI usage
+
+- AI was used to format the `results.json` into markdown tables format
+- AI was used to provide some Java syntax 
+- AI was used to discuss high level design decisions for code structure (such as how to structure the classes, and how to record the metrics)
+- AI was used to discuss the implementation of the Tim Sort algorithm
+- AI was not used to write the report
+- AI was not used to write any of the code

@@ -83,13 +83,12 @@ class Main {
      * };
      */
 
-    Integer arr[] = { 2, 1 };
-
+    // Integer arr[] = { 1, 1, 1, 1, 1 };
+    Integer arr[] = { 12, 41, 39, 17, 37 };
     // System.out.println(Arrays.toString(arr));
-    TimSort<Integer> timSort = new TimSort<Integer>(sortMetrics, 5, new Integer[arr.length]);
-    // System.out.println(timSort.findRun(arr, 9));
-    sortMetrics.runSort(arr, timSort);
-    System.out.println(sortMetrics.getJsonContent());
+    sortMetrics.runSort(arr, new TimSort<Integer>(sortMetrics, 32, new Integer[arr.length]));
+    // sortMetrics.runSort(arr, new JavaSort<Integer>(sortMetrics));
+    System.out.println(sortMetrics.getResultsAsJson());
     // System.out.println(Arrays.toString(arr));
   }
 }

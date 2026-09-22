@@ -24,6 +24,14 @@ Timsort is a hybrid, stable sorting algorithm, derived from merge sort and inser
 
 # Methodology
 
+## Empirical Run-Time Testing Methodology
+
+The most obvious data set we should use is integers, however, that begs the question, what should be the range of the randomly generated integer be? Suppose that we generate random integers in the range between $[1, k]$ and we generate a list of size $n$. If $k >> n$, then we would rarely get duplicates, meanwhile, if $k << n$, then we will get many duplicates.
+
+Our parameter will then be the ratio $r = \frac{n}{k}$ where a high value of $r$ would mean more duplicates (I think the duplicate can be thought of as the expected number of duplicates, although, I'm not too certain on the probabilistic analysis on that). We can select something like $r = 10$ for data with high duplication, and $r = 0.1$ for low duplication.
+
+
+
 # Time complexity analysis
 
 # Performance results

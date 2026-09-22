@@ -278,9 +278,9 @@ public class TimSort<T> extends Sort<T> {
      * for (int i = 0; i <= discoveredRunPtr; i++) {
      * System.out.println(discoveredRun[i]);
      * }
-     * 
-     * System.out.println(Arrays.toString(arr));
      */
+
+    // System.out.println(Arrays.toString(arr));
 
     // now we're in the mergeCollapse stage, where we begin pushing things into the
     // runStack, while preserving our invariance
@@ -304,5 +304,6 @@ public class TimSort<T> extends Sort<T> {
     // at the end of the algorithm, change the pointer to null so that the garbage
     // collector can take care of the rest
     runStack = null;
+    runStackPtr = -1;
   }
 }

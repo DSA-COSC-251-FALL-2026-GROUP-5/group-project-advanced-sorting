@@ -1,0 +1,31 @@
+{
+  "swaps" : 0,
+  "comparisons" : 19,
+  "copies" : 6,
+  "runTime" : 583736,
+  "datasetSize" : 5
+}{
+  "swaps" : 2,
+  "comparisons" : 11,
+  "copies" : 3,
+  "runTime" : 492593,
+  "datasetSize" : 5
+}{
+  "swaps" : 0,
+  "comparisons" : 16,
+  "copies" : 10,
+  "runTime" : 468463,
+  "datasetSize" : 5
+}{
+  "swaps" : 2,
+  "comparisons" : 19,
+  "copies" : 12,
+  "runTime" : 52413168,
+  "datasetSize" : 5
+}{
+  "swaps" : 0,
+  "comparisons" : 17,
+  "copies" : 10,
+  "runTime" : 441672,
+  "datasetSize" : 5
+}

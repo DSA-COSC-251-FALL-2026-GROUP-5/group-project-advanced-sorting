@@ -187,27 +187,33 @@ public class SortMetrics<T> {
     this.datasetSize = arr.length;
   }
 
-  String getJsonContent() {
-    String unsortedArrAsString = unsortedArr == null ? "[]" : Arrays.toString(unsortedArr);
-    String sortedArrAsString = sortedArr == null ? "[]" : Arrays.toString(sortedArr);
+  String getMetadataAsJson() {
     return """
         {
-          "metadata" : {
-            "swaps" : %d,
-            "comparisons" : %d,
-            "copies" : %d,
-            "runTime" : %d,
-            "datasetSize" : %d
-          },
-          "unsortedArr" : %s,
-          "sortedArr" : %s,
-        }
-            """.formatted(
+          "swaps" : %d,
+          "comparisons" : %d,
+          "copies" : %d,
+          "runTime" : %d,
+          "datasetSize" : %d
+        }""".formatted(
         swaps,
         comparisions,
         copies,
         runTime,
-        datasetSize,
+        datasetSize);
+  }
+
+  String getResultsAsJson() {
+    String unsortedArrAsString = unsortedArr == null ? "[]" : Arrays.toString(unsortedArr);
+    String sortedArrAsString = sortedArr == null ? "[]" : Arrays.toString(sortedArr);
+    return """
+        {
+          "metadata" : %s,
+          "unsortedArr" : %s,
+          "sortedArr" : %s,
+        }
+            """.formatted(
+        getMetadataAsJson(),
         unsortedArrAsString,
         sortedArrAsString);
   }
@@ -215,7 +221,7 @@ public class SortMetrics<T> {
   void writeToFile(String path) {
     try {
       // Overwrites the file if it exists, or creates a new one
-      Files.writeString(Path.of(path), getJsonContent());
+      Files.writeString(Path.of(path), getResultsAsJson());
     } catch (IOException e) {
       e.printStackTrace();
     }

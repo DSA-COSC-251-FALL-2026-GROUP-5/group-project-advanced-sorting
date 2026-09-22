@@ -1,15 +1,97 @@
 # Usage
 
+Make sure you're in a bash or zsh terminal. If you're not in a bash terminal, simply look in the file and run the commands in the script, assuming you have `java` and `javac` in your path. There are 3 bash scripts in the root directory 
+
+In order to build the project, run:
+
+```
+./build
+```
+
+This will compile the Java code into Java Byte code inside of the `out` directory. To run `Main` class, run the command:
+
+```
+./run
+```
+
+To collect the data, we can run the collect data script
+
+```
+./collect_data
+```
+
+## Data Analysis
+
+A simple data analysis was done using python in order to measure the mean and standard deviation of the runs. This was done in a `marimo` notebook.
+
+To view the notebook, first change your directory to `scripts`, then run:
+
+```
+uv sync
+```
+
+to install `marimo` (assuming you have `uv`, otherwise, you can install `marimo` using `pip`).
+
+If you're using `uv`, run:
+
+```
+uv run marimo edit .
+```
+
+otherwise, if you have marimo installed globally, run:
+
+```
+marimo edit .
+```
+
+In the page, you can click on the `data_analysis.py` notebook to view it.
+
+## Using the sorting interface
+
+So, in `Main.java` you can access all of the classes in the `*Sort.java` files. The code to run a simple Bubble Sort in `Main.java` for integers is as follows:
+
+```java
+class Main {
+  public static void main(String[] args) {
+    SortMetrics<Integer> sortMetrics = new SortMetrics<Integer>(Integer::compare);
+    Integer arr[] = { 3, 4, 5, 17, 100, 1, 222, 2, 2, 2 };
+    sortMetrics.runSort(arr, new TimSort<Integer>(sortMetrics, 32, new Integer[arr.length]));
+    System.out.println(sortMetrics.getResultsAsJson());
+    sortMetrics.writeToFile("saved_output/saved.json");
+    sortMetrics.resetMetrics();
+  }
+}
+```
+
+- the `SortMetrics` class implements all of the utility functions such as `swap`, `rightShift`, `merge`, `compare` such that it can log all of the metrics for us to export and analyze later.
+- every sorting algorithm has its own class, which all inherits from an abstract base class of the type `Sort` which has a `Sort.sort` method, which `SortMetrics.run` wraps around, in order to get the runtime data.
+- `SortMetrics.getResultsAsJson` will format the metrics data as json along side with the sorted and unsorted array. If we only want the metadata, we can use the `SortMetrics.getMetadataAsJson` method.
+- the `SortMetrics.resetMetrics` method simply resets the internal counters for metrics such as run time, swaps, comparisons, etc.
+- to save to file, we can use the `SortMetrics.writeToFile` method, which will save the content of `SortMetrics.getResultsAsJson` to a file of a specified path
+
+In place of `TimSort`, we can similarly initialize `MergeSort`, `BubbleSort`, etc.
+
+```java
+class Main {
+  public static void main(String[] args) {
+    SortMetrics<Integer> sortMetrics = new SortMetrics<Integer>(Integer::compare);
+    Integer arr[] = { 3, 4, 5, 17, 100, 1, 222, 2, 2, 2 };
+    sortMetrics.runSort(arr, new BubbleSort<Integer>(sortMetrics));
+    System.out.println(sortMetrics.getResultsAsJson());
+    sortMetrics.writeToFile("saved_output/saved.json");
+    sortMetrics.resetMetrics();
+  }
+}
+```
+
 # TODO
 
 ## Coding side
 
 - [x] use a generic sorting class, and then fill in the blank for each sorting algorithm as a subclass
 ~~- [] generate or write a test suite~~
-~~- [x] write a `.isSorted` function in `Sort.java`.~~
-~~- [x] write a `.swap` function in `Sort.java`.~~
-- [x] save sorted results to a `.txt` file (I suppose it can be json, as long as it's a plain text file)
-- [x] log performance results such as:
+~~- [x] write a `.isSorted` function in `Sort.java`.~~ ~~- [x] write a `.swap` function in `Sort.java`.~~
+- [x] save sorted results to a `.txt` file (I suppose it can be json, as long as it's a plain text file) [x] log performance results such as:
   - [x] dataset size
   - [x] runtime
   - [x] number of comparisons
@@ -37,16 +119,17 @@
 Introduction
 
 - [] Algorithm explanation with examples
-- [] Time complexity analysis
+- [x] Time complexity analysis
 - [] Java implementation
-- [] Testing methodology
-- [] Performance results for 5, 1,000, and 1,000,000 elements
-- [] Comparison with Bubble Sort, Selection Sort, and Insertion Sort
-- [] Appropriate and inappropriate use cases
-- [] Real-world applications
-- [] Conclusion and findings
+- [x] Testing methodology
+- [x] Performance results for 5, 1,000, and 1,000,000 elements
+- [x] Comparison with Bubble Sort, Selection Sort, and Insertion Sort
+- [x] Appropriate and inappropriate use cases
+- [x] Real-world applications
+- [x] Conclusion and findings
 
 Project requirement is linked [here](./assignment.pdf).
+
 
 # Notes
 

@@ -29,7 +29,6 @@ public class TimSort<T> extends Sort<T> {
     }
 
     if (currentIndex == arr.length - 1) {
-      // TODO: fix off-by-one error on this one
       return new Run(startIndex, currentIndex - startIndex + 1, true);
       // if startIndex haven't moved, then we have an array of sized 1, although, that
       // would be kinda useless, but it might happen if we were to reach the end of

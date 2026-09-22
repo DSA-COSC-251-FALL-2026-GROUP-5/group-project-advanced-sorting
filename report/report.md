@@ -1,26 +1,22 @@
 ---
-title: "Timsort"
-author: "Group 5"
 toc: true
 toc-depth: 2
+geometry: "left=1in,right=1in,top=2in,bottom=2in"
 number-sections: true
 ---
 
-
-- [] Algorithm explanation with examples
-- [] Time complexity analysis
-- [] Java implementation
-- [x] Testing methodology
-- [] Performance results for 5, 1,000, and 1,000,000 elements
-- [x] Comparison with Bubble Sort, Selection Sort, and Insertion Sort
-- [] Appropriate and inappropriate use cases
-- [] Real-world applications
-- [] Conclusion and findings
-
+\newpage
 
 # Introduction
 
-Timsort is a hybrid, stable sorting algorithm, derived from merge sort and insertion sort, designed to perform well on many kinds of real-world data. It was implemented by Tim Peters in 2002 for use in the Python programming language. The algorithm finds subsequences of the data that are already ordered (runs) and uses them to sort the remainder more efficiently.
+Timsort is a reliable hybrid sorting algorithm that uses the combination of the Merge Sort and the Binary Insertion Sort. It is an adaptable sorting algorithm, meaning it exploits pre-existing orders sequences (runs) within the input dataset to minimize comparisons and operational overhead, which is different from the $O(n \log_2 n)$ comparison sorts that treat data partially ordered identical and random. 
+
+Timsort was designed by Tim Peter in 2002 originally for the Python library, and it was surprisingly successful in handling real life work data and led to global use till these days. Furthermore, Timsort today serves as the default sorting algorithm for object arrays in the Java language (`Arrays.sort`) [^1].
+
+This research report evaluates the theoretical mechanics and practical test of our Java execution of Timsort.
+
+[^1]: The source code for JDK11 for `Arrays.sort` is linked [here](https://github.com/openjdk/jdk11/blob/master/src/java.base/share/classes/java/util/Arrays.java#L210)
+
 
 # Methodology
 
@@ -32,14 +28,14 @@ We will then compare it against other sorting algorithms to see why it is one of
 
 We will compare it against the following sorting algorithms:
 
-- Bubble sort
-- Insertion sort
-- Selection sort
-- Merge sort
+- Bubble Sort
+- Insertion Sort
+- Selection Sort
+- Merge Sort
 - Timsort
-- Java's sort
+- Java's Sort
 
-The reason why we included Merge sort is because Timsort builds off of Merge sort. Moreover, our "control" will be Java's sorting algorithm.
+The reason why we included Merge Sort is because Timsort builds off of Merge Sort. Moreover, our "control" will be Java's sorting algorithm. Also, do note that our Insertion Sort implementation is Insertion Sort with binary search, that is, Binary Insertion Sort, because, we have to utilize it for Timsort.
 
 ## Notable metrics
 
@@ -63,7 +59,7 @@ The most obvious data set we should use is integers, however, that begs the ques
 
 Suppose that we generate random integers in the range between $[1, k]$ and we generate a list of size $n$. If $k >> n$, then we would rarely get duplicates, meanwhile, if $k << n$, then we would get many duplicates.
 
-Our parameter will then be the ratio $r = \frac{n}{k}$ where a high value of $r$ would mean more duplicates (I think the duplicate can be thought of as the expected number of duplicates, although, I'm not too certain on the probabilistic analysis on that).
+Our parameter will then be the ratio $r = \frac{n}{k}$ where a high value of $r$ would mean more duplicates.
 
 In our case, we selected 2 duplication ratios:
 
@@ -212,13 +208,228 @@ Because of the randomness of the dataset, and the randomness of OS scheduling, i
 
 We will run perform each run 100 times to ensure a good sample size.
 
+# Key characteristics
+
+- Stability: Timsort is stable, it makes sure that the relative order of equal elements remains unchanged during the sorting process. For sorting objects by multiple fields this is extremely important.
+
+- Adaptability: The way that the algorithm adapts to the data exiting structure is so nicely executed. If the segment of the array is already sorted (ascending or descending), it will capitalize on this order to skip redundant comparisons.
+
+- Comparison based: Timsort can sort items as long as the object as a notion of an order, that is, for a type $T$, as long as there is a notion that $t_1 > t_2$ for $t_1, t_2 \in T$. This is different from something like Radix Sort or Counting Sort which requires the array to be an array of integers.
+
+# Execution pipeline
+
+This is roughly how Timsort gets executed in plain English:
+
+1. Run Identification: The algorithm scans the array to search for subarrays that are already sorted. If a descending run is detected, it will quickly reverse it to prevent the worst case of Insertion Sort from executing. In our implementation, this is done by the `findRun` method, which returns the start of the run, and the length of the run. 
+
+2. Run Extension: If the algorithm finds that the natural run is shorter than the `minRun`. Timsort will extend it by pulling in adjacent elements using Binary Insertion Sort until the runs reaches the `minRun` threshold.
+
+3. Merge Stack Management: As runs are identified and measured, they are then pushed onto a runs stack. In our case, in order to make debugging easier, we decided to decouple the runs finding and extension stage, from the invariance preserving stack stage, by storing each run inside of a `discoveredRun` array first, which will then be looped through to be pushed to the actual `runStack`. To help maintain the optimal performance, merging is triggered dynamically in order for the `runStack` to maintain two invariants: `s[n - 2] > s[n - 1] + s[n])` and `s[n - 1] > s[n]`. Maintaining this invariance has the property that similar sized subarrays will be merged, making it the most optimal $O(n \log_2 n)$ stack collapsing.
+
+
+
+
+
+# Java implementation
+
+
+```java
+public Run findRun(T[] arr, int startIndex) {
+  int currentIndex = startIndex;
+  while ((currentIndex <= (arr.length - 2))
+      && (sortMetrics.comparator.compare(arr[currentIndex], arr[currentIndex + 1]) == 0)) {
+    currentIndex++;
+  }
+  if (currentIndex == arr.length - 1) {
+    return new Run(startIndex, currentIndex - startIndex + 1, true);
+  }
+  boolean isAscending;
+  isAscending = sortMetrics.comparator.compare(arr[currentIndex + 1], arr[currentIndex]) > 0;
+  if (!isAscending) {
+    sortMetrics.toggleSign();
+  }
+  while ((currentIndex <= (arr.length - 2))
+      && (sortMetrics.comparator.compare(arr[currentIndex + 1], arr[currentIndex]) >= 0)) {
+    currentIndex++;
+  }
+  if (!isAscending) {
+    sortMetrics.toggleSign();
+  }
+  return new Run(startIndex, currentIndex - startIndex + 1, isAscending);
+}
+```
+
+
+
+
+```java
+InsertionSort<T> insertionSort = new InsertionSort<T>(sortMetrics);
+while (runPtr <= arr.length - 1) {
+  Run run = findRun(arr, runPtr);
+  int endIndex;
+  // second condition is to check whether the subarray is at the boundary of the array
+  if (run.length() < minRun && (run.startIndex() + run.length()) < arr.length) {
+    endIndex = Math.min(run.startIndex() + minRun - 1, arr.length - 1);
+    if (!run.isAscending()) {
+      sortMetrics.toggleSign();
+    }
+    insertionSort.sortSubarray(arr, run.startIndex(), endIndex);
+    if (!run.isAscending()) {
+      sortMetrics.toggleSign();
+    }
+    run = new Run(run.startIndex(), endIndex - run.startIndex() + 1, run.isAscending());
+  } else {
+    endIndex = runPtr + run.length() - 1;
+  }
+  if (!run.isAscending()) {
+    sortMetrics.reverse(arr, runPtr, endIndex);
+    run = new Run(run.startIndex(), run.length(), true);
+  }
+  runPtr = endIndex + 1;
+  discoveredRunPtr++;
+  discoveredRun[discoveredRunPtr] = run;
+}
+```
+
+```java
+for (int i = 0; i <= discoveredRunPtr; i++) {
+  runStackPtr++;
+  runStack[runStackPtr] = discoveredRun[i];
+  mergeCollapse(arr);
+}
+mergeForceCollapse(arr);
+```
+
+
 # Time complexity analysis
+
+We won't fully derive the time complexity for Timsort, and will refer to external authoritative derivations when necessary. Moreover, we will assume that the time complexity of the other algorithms needs no further elaboration.
+
+## Best-case scenario
+
+The best-case scenario for Timsort is exactly the same as the best case as Insertion Sort, because, in the case of Timsort, we would find that we only have one run, and even though there are a lot of conditionals afterwards, it wouldn't go into any of them and would just return. In such a case, since `findRun` is $O(n)$, the best case scenario is $O(n)$.
+
+## Average-case scenario
+
+For random data, the average case behaves similarly to Merge Sort, where we perform insertion sort once we've reached a sub array of size `minRun`, because, for random data, it is usually the case that we don't have any natural runs that's bigger than `minRun` (unless your duplication ratio is quite high).
+
+A non-rigorous back-of-the-envelope analysis can be done to find the average case running time of Timsort.
+
+Essentially, if our minimum run length is $r_m$, then we split the array until we reach a sub array of length $r_m$. 
+
+For convenience, let's assume that $r_m$ is a power of $2$ and the size of the array $n$ is also a power of $2$.
+
+If $d$ is the depth of the merge tree, typically:
+
+$$
+n = 2^{d}
+$$
+
+However, in this case, we factor $r_m$ so that:
+
+$$
+n = r_m \frac{2^d}{r_m}
+$$
+
+Meaning that:
+
+$$
+n = r_m 2^{d - \log_2(r_m)}
+$$
+
+So, we stop splitting at depth $d_n = d - \log_2(r_m)$
+
+$$
+d_n = d - \log_2(r_m) = \log_2 (\frac{n}{r_m})
+$$
+
+At the bottom, for $\frac{n}{r_m}$ subarrays of size $r_m$, we need to do Binary Insertion Sort which is of sized $r_m$, meaning that it takes: $C r_m^2$ time where $C$ is a constant factor for some operation. Since we have to do it for $\frac{n}{r_m}$ subarrays, we get that to sort the base of the tree we require:
+
+$$
+C r_m^2 \times \frac{n}{r_m} = C n r_m
+$$
+
+time.
+
+Merging from that depth level $d_n$ to the top would then take:
+
+$$
+C n d_n = C n \log_2 (\frac{n}{r_m})
+$$
+
+because, at every level, we require $n$ operations for merging each subarrays.
+
+As such, in total, we would need:
+
+$$
+C n \log_2 (\frac{n}{r_m}) + C n r_m
+$$
+
+$$
+C n \log_2 (n) - C n \log_2(r_m) + C n r_m
+$$
+
+$$
+C n \log_2 (n) + C (r_m - \log_2(r_m)) n
+$$
+
+time.
+
+So the leading term is $n \log_2(n)$, as such, the algorithm is $O(n \log_2(n))$, as long as $r_m$ is independent of $n$.
+
+## Worst-case scenario
+
+In the case of Insertion Sort, we know that the worst case happens precisely when the array is in descending order, because, it would need to perform $n - 1$ right shifts, and then $n - 2$ right shifts, and then $n - 3$ right shifts... which amounts to $C\frac{n (n - 1)}{n}$ (plus binary search, which is $O(\log_2(n))$, which is a lower order term so we ignore it) which is $O(n^2)$.
+
+Timsort isn't naive, in that it has mechanisms to detect descending runs and then reverse them accordingly, preventing the worst case of Insertion Sort from affecting it. This makes analyzing the worst case for Timsort quite difficult. As such I will refer to a paper that analyzed the Worst-case complexity of Timsort by Nicholas Auger, et al. [^3]
+
+In the abstract, it is stated that for Python's particular implemenation of Timsort, it generally runs in:
+
+$$
+O(n + n\log_2 \rho)
+$$
+
+where $\rho$ is the number of runs.
+
+Anyway, we can even suppose that there is an upper bound that $\rho \leq n$, because the total amount of runs has to be less than the length of the array itself:
+
+$$
+O(n + n \log_2 \rho) \leq O(n + n \log_2 n)
+$$
+
+So:
+
+$$
+O(n + n \log_2 \rho) \leq O(n \log_2 n)
+$$
+
+Meaning that in the worst case, it is also $O(n \log_2 n)$ for Python's particular implementation of Timsort.
+
+[^3]: On the Worst-Case Complexity of TimSort by Nicolas Auger, Vincent Jugé, Cyril Nicaud, Carine Pivoteau is linked [here](https://arxiv.org/abs/1805.08612)
+
+## Space complexity
+
+The space complexity of this algorithm is $O(n)$ because we need to initialize a temporary array at least half the size of the array in order to perform the merge operation. In our case, to make implementation easier, we decided to use a temporary array that is the same size as the array, making exactly $n$, which is still $O(n)$.
+
+## Comparison with other sorting algorithms
+
+| Algorithm | Best Case | Average Case | Worst Case | Space |
+|:--|:--|:--|:--|
+|Bubble Sort| $O(n^2)$ | $O(n^2)$ | $O(n^2)$ | $O(1)$ |
+|Selection Sort| $O(n^2)$ | $O(n^2)$ | $O(n^2)$ | $O(1)$|
+|Insertion Sort| $O(n)$ | $O(n^2)$ | $O(n^2)$ | $O(1)$|
+|Merge Sort | $O(n \log_2 n)$ | $O(n \log_2 n)$ | $O(n \log_2 n)$ | $O(n)$|
+|Timsort | $O(n)$ | $O(n \log_2 n)$ | $O(n \log_2 n)$ | $O(n)$|
+
+It is important to note that Bubble sort, Selection sort can have a best case of $O(n^2)$ for sorted array if we implement early breaking mechanisms such as, if there has been no swaps since we've swept through the array, we break, although, the naive implementation (which is what we implemented) would run in $O(n^2)$ even for an already sorted array
 
 # Performance results
 
-Note that the $\pm$ uncertainty range is in terms of the sample standard deviation $\sigma$. If we assume that it's normally distributed, we can estimate that $99.7\%$ of the sample falls in between $\mu \pm 3 \times \sigma$, where $\mu$ is the sample mean. If we remain conservative and assume that the data is of an arbitrary distribution, Chebyshev's theorem gives us that $99\%$ of the samples must fall in between the range of $\mu \pm 10 \times \sigma$.
+Note that the $\pm$ uncertainty range is in terms of the sample standard deviation $\sigma$. If we assume that it's normally distributed, we can estimate that $99.7\%$ of the sample falls in between $\mu \pm 3 \sigma$, where $\mu$ is the sample mean. If we remain conservative and assume that the data is of an arbitrary distribution, Chebyshev's theorem gives us that $99\%$ of the samples must fall in between the range of $\mu \pm 10 \sigma$.
 
-Also note that we will refer for the array of sized $5$ as small sized, the array of sized $1000$ as medium sized, and the array of sized $1000000$ as large sized.
+Also note that we will sometimes refer to the array of sized $5$ as small sized, the array of sized $1000$ as medium sized, and the array of sized $1000000$ as large sized.
+
+The raw results are stored [here on GitHub](https://github.com/DSA-COSC-251-FALL-2026-GROUP-5/group-project-advanced-sorting/tree/main/results), while the analyzed results are stored [here on GitHub](https://github.com/DSA-COSC-251-FALL-2026-GROUP-5/group-project-advanced-sorting/blob/main/scripts/results.json).
 
 ## Runtime
 
@@ -252,21 +463,21 @@ This can easily be seen with some back-of-the-envelope calculation.
 
 When we move from an input size of $1000$ to $1000000$, we're increasing the input size by a factor of $1000$. As such, the amount of time it would take would be scaled by a factor of $1000^2 = 10^6$ or a million.
 
-Since it took $2.31 \times 10^{-3} s$ for bubble sort to sort a sized $1000$ array, for a sized $10^{6}$ array, we would expect the algorithm to take take:
+Since it took $2.31 \times 10^{-3} s$ for Bubble Sort to sort a sized $1000$ array, for a sized $10^{6}$ array, we would expect the algorithm to take take:
 
 $$
 2.31 \times 10^{-3} \times 10^{6} = 2.31 \times 10^{3} = 2310 s
 $$
 
-It would then take around $38.5$ minutes to complete. If we were to run this 100 times, it would then take around $3850$ minutes to complete, which is around $64.2$ hours. As such, for $O(n^2)$ sorting algorithms, which in our case, include bubble sort, selection sort, and insertion sort; they won't have an entry in the array of sized $1000000$ column of any of the other metrics either.
+It would then take around $38.5$ minutes to complete. If we were to run this 100 times, it would then take around $3850$ minutes to complete, which is around $64.2$ hours. As such, for $O(n^2)$ sorting algorithms, which in our case, include Bubble Sort, Selection Sort, and Insertion Sort; they won't have an entry in the array of sized $1000000$ column of any of the other metrics either.
 
-For data with low duplication, Timsort and merge sort performs very similarly for large input ($10^{6}$ length array), although,  it's about 2 times slower than Java's implementation of `Arrays.sort`. This is somewhat expected since for data with low duplication, most of the runs will be of size `minRun`, which makes it behave similarly to merge sort.
+For data with low duplication, Timsort and Merge Sort performs very similarly for large input ($10^{6}$ length array), although,  it's about 2 times slower than Java's implementation of `Arrays.sort`. This is somewhat expected since for data with low duplication, most of the runs will be of size `minRun`, which makes it behave similarly to Merge Sort.
 
-Where Timsort runs somewhat faster than merge sort in the case of data with low duplication with sized $1000$, although, it might not be a statistically significant difference given the uncertainty.
+Where Timsort runs somewhat faster than Merge Sort in the case of data with low duplication with sized $1000$, although, it might not be a statistically significant difference given the uncertainty.
 
 As for the data with high duplication, the results doesn't seem significantly different, perhaps because the duplication ratio is too low.
 
-All in all, for our particular dataset, Timsort performs very similarly to merge sort, and since Timsort is $O(n \log_2 n)$, it can sort an array of sized $1000000$ in a reasonable amount of time compared to bubble sort, selection sort, and insertion sort.
+All in all, for our particular dataset, Timsort performs very similarly to Merge Sort, and since Timsort is $O(n \log_2 n)$, it can sort an array of sized $1000000$ in a reasonable amount of time compared to Bubble Sort, Selection Sort, and Insertion Sort.
 
 ## Comparisons
 
@@ -296,7 +507,7 @@ Note that for Java's sort, we couldn't count the amount of swaps, nor the amount
 
 The amount of comparisons has a standard deviation that's quite tight, which is good for determining the difference between different algorithms.
 
-For the medium sized array, Timsort has fewer comparisons than insertion sort, however, merge sort has a significantly lower amount of comparisons. This is probably due to the fact that Timsort requires comparisons for merging similar to merge sort, but also comparisons to determine the amount of runs, whether it's decreasing, and because we use insertion sort for smaller sized array.
+For the medium sized array, Timsort has fewer comparisons than Insertion Sort, however, Merge Sort has a significantly lower amount of comparisons. This is probably due to the fact that Timsort requires comparisons for merging similar to Merge Sort, but also comparisons to determine the amount of runs, whether it's decreasing, and because we use Insertion Sort for smaller sized array.
 
 ## Swaps
 
@@ -322,7 +533,7 @@ With $r = 10$:
 | `selectionSort` | $3 \pm 0$ | $993.42 \pm 2.21$ | N/A |
 | `timSort` | $0 \pm 0$ | $247.52 \pm 44.52$ | $2.499 \times 10^{5} \pm 1.244 \times 10^{3}$ |
 
-Bubble sort and selection sort requires swaps, however, insertion sort and merge sort doesn't do a conventional swap, as such, this isn't quite a fair metric of comparison.
+Bubble Sort and Selection Sort requires swaps, however, Insertion Sort and Merge Sort doesn't do a conventional swap, as such, this isn't quite a fair metric of comparison.
 
 ## Copies (excluding swaps)
 
@@ -348,7 +559,7 @@ With $r = 10$:
 | `selectionSort` | $0 \pm 0$ | $0 \pm 0$ | N/A |
 | `timSort` | $0 \pm 0$ | $1.929 \times 10^{4} \pm 162.64$ | $3.941 \times 10^{7} \pm 5.402 \times 10^{3}$ |
 
-The copies excluding swaps gets counted when we do things such as right shift operators and merging. Nonetheless, it still isn't a fair metric of comparison because, bubble sort and selection sort only uses swaps, which doesn't get counted into the copies excluding swaps.
+The copies excluding swaps gets counted when we do things such as right shift operators and merging. Nonetheless, it still isn't a fair metric of comparison because, Bubble Sort and Selection Sort only uses swaps, which doesn't get counted into the copies excluding swaps.
 
 ## Copies (including swaps)
 
@@ -376,8 +587,32 @@ With $r = 10$:
 
 The copies which include swaps includes swaps into the total amount of copies, where one swap amounts to 3 copies operations.
 
-For arrays with a high low duplication factor, bubble sort, and Timsort doesn't do any copy and exits for small arrays. The array consists of just 1, meaning that it is already sorted. Merge sort on the other hand is naive, and still splits the array, even though it's already sorted. Similarly for selection sort, it will still methodically search for the minimum and try to swap it, because it's naive.
+For arrays with a high low duplication factor, Bubble Sort, and Timsort doesn't do any copy and exits for small arrays. The array consists of just 1, meaning that it is already sorted. Merge Sort on the other hand is naive, and still splits the array, even though it's already sorted. Similarly for Selection Sort, it will still methodically search for the minimum and try to swap it, because it's naive.
 
-For bigger arrays, for both arrays with low and high duplication factor, the amount of copies between merge sort and Timsort isn't significant.
+For bigger arrays, for both arrays with low and high duplication factor, the amount of copies between Merge Sort and Timsort isn't significant. We believe that Timsort would perform a lot better for data more duplicates, and larger runs (natural runs larger than 32).
 
-# Conclusion
+# Use Cases & Real-World Examples 
+
+Since Timsort is a hybrid architecture makes it highly advantageous for specific software, although its memory requirements limit its universal application. 
+
+Optimal Scenarios (Appropriate Use Cases):
+
+- Real world Data Processing: in this case data often contains pre-exiting sequential patterns (partially sorted data); Timsort capitalizes on these natural runs to approach its best case which is the $O(n)$. 
+
+- Stability Critical Tasks: Since Timsort is a stable sorting algorithm (assuming that merging is implemented in a stable fashion, which it can be), it is ideal for sorting complex objects in arrays by multiple fields sequentially without disrupting the original relative order of equal elements. 
+
+- High-Level Language Core Libraries: Timsort is well optimized for the standard library implementations handling drivers, with unpredictable user datasets, as evidenced by its integration into Python’s `list.sort` method (pre-Python 3.11) , Java's `Arrays.sort` [^2].
+
+Unoptimal Scenarios (Inappropriate Use Cases):
+
+- Limited Ram: Timsort require auxiliary memory proportional to the data size, it is inappropriate for embedded system that has only the O(1) space requirement. 
+
+- Integer Arrays: For Integer arrays, sorting can be done a lot faster using an algorithm like Radix Sort. We choose an array of Integers for testing due to its simplicity.
+
+[^2]: Python moved away from using Timsort to using Power Sort starting from Python version 3.11. More information can be found [here](https://power-sort.github.io).
+
+# Conclusion and Limitations
+
+Timsort is seen as the gold standard in terms of general sorting algorithm. Although this demonstration haven't fully demonstrated Timsort's capability for real world data, we've shown that for random data, it performs just as good as Merge sort, which has an $O(n \log_2 n)$ run time, making it feasible for arrays of very large sizes.
+
+In practice, Timsort also has many more optimizations such as galloping mode for merging, and more advanced techniques which we haven't implemented which may make it a lot faster. In the future, it would be a lot more insightful to use datasets that more resemble real world data, and implement the different optimizations that is used in applications such as in Java's `Arrays.sort`.

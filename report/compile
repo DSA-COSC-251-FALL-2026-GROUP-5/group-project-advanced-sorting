@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-pandoc report.md --toc -V documentclass=report -o report.pdf
+pandoc report.md --toc -V --wrap=auto --columns=90 -o report.pdf

@@ -60,7 +60,7 @@ class CollectData {
                 path,
                 sortMetrics.getMetadataAsJson(),
                 StandardOpenOption.CREATE,
-                StandardOpenOption.APPEND);
+                StandardOpenOption.WRITE);
             sortMetrics.resetMetrics();
           }
         }
@@ -87,8 +87,15 @@ class CollectData {
     sortTypeMap.put("timSort", timSort);
     sortTypeMap.put("javaSort", javaSort);
 
-    runSortAndSaveToFile(
-        "bubbleSort",
-        sortTypeMap);
+    String fastSorts[] = {
+        "mergeSort",
+        "timSort",
+        "javaSort"
+    };
+    for (String fastSort : fastSorts) {
+      runSortAndSaveToFile(
+          fastSort,
+          sortTypeMap);
+    }
   }
 }

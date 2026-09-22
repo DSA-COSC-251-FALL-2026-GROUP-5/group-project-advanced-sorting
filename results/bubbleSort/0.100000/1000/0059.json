@@ -1,7 +1,7 @@
 {
-  "swaps" : 240007,
+  "swaps" : 249977,
   "comparisons" : 499500,
   "copies" : 0,
-  "runTime" : 5135561,
+  "runTime" : 2074694,
   "datasetSize" : 1000
 }

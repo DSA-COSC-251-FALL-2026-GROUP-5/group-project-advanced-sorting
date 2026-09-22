@@ -2,6 +2,6 @@
   "swaps" : 2,
   "comparisons" : 19,
   "copies" : 13,
-  "runTime" : 27485,
+  "runTime" : 6408,
   "datasetSize" : 5
 }

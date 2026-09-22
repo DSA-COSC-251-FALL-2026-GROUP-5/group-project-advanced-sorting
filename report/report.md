@@ -17,6 +17,12 @@ This research report evaluates the theoretical mechanics and practical test of o
 
 [^1]: The source code for JDK11 for `Arrays.sort` is linked [here](https://github.com/openjdk/jdk11/blob/master/src/java.base/share/classes/java/util/Arrays.java#L210)
 
+# Terminology
+
+There are a couple of terminologies that I will refer to:
+
+- run: a run refers to a subarray that's already sorted
+- invariant: a particular trait, condition, or constraint that must hold for all cases. For instance, a sorted array in ascending order has the invariant that $a[i + 1] \geq a[i] \forall i \in [0, n - 2]$  where $n$ is the size of the array
 
 # Methodology
 
@@ -208,6 +214,88 @@ Because of the randomness of the dataset, and the randomness of OS scheduling, i
 
 We will run perform each run 100 times to ensure a good sample size.
 
+# Algorithm Explanation
+
+## Overview of Binary Insertion Sort
+
+Since Timsort relies on Binary Insertion Sort to extend runs, we must understand how Binary Insertion Sort works.
+
+Binary Insertion Sort builds off of a very simple idea:
+
+- suppose that we have a barrier separating the left side of the array from the right side of the array, which is at index $i$ let's say
+- we say that from index 0 to index $i$, the array is sorted. Even if the array isn't sorted at all, when $i = 0$, it is trivially sorted
+- we then move try to increase $i$ by one and then fix the invariant that from index 0 to index $i$, it must be sorted by insertion
+- to find where to insert, we use Binary Search, which takes $O(\log_2 (i + 1))$ in this case, and then we insert by first storing the value at $i$ in a temporary variable, then we right shift from the insertion index, then we place that value at the insertion index.
+- we then continue this process until we reach the end of the array.
+
+When doing Timsort, for a small sized array, we would be using Binary Insertion Sort.
+
+So keep note that for Binary Insertion Sort, the invariant is that the range $[0, i]$ must be sorted.
+
+Let's have an example. Suppose we have the array `[4, 2, 3, 5, 1]` and `minRun = 32`. In this case, the run can't really reach $32$ because the array is of sized $5$, the algorithm would do Binary Insertion Sort.
+
+So we first have a pointer pointing at index 0, but the invariant is trivially met, so we move on to the next $i = 1$. Now, the invariant isn't met, however, given that the invariant was met at $i = 0$, we can easily make the invariant hold for $i = 1$ by insertion. In this case, we insert it in the front as such:
+
+```
+   i = 1
+    |
+    v
+[2, 4, 3, 5, 1]
+```
+
+Now the invariant is met, we move to the next one:
+
+```
+      i = 2
+       |
+       v
+[2, 4, 3, 5, 1]
+```
+
+The invariant isn't met again, so we perform binary search from $0$ to $i = 2$, which will give the insertion index. In our case, we can see that we must insert it in between 2 and 4.
+
+```
+      i = 2
+       |
+       v
+[2, 3, 4, 5, 1]
+```
+
+The invariant is now met, so we move to the next index
+
+```
+         i = 3
+          |
+          v
+[2, 3, 4, 5, 1]
+```
+
+The invariant is also met, so we move to the next index.
+
+```
+            i = 4
+             |
+             v
+[2, 3, 4, 5, 1]
+```
+
+Now we must fix the invariant by finding the point of insertion through binary search, then inserting it. At the end, binary search will give you an index of insertion at $i = 0$.
+
+```
+            i = 4
+             |
+             v
+[1, 2, 3, 4, 5]
+```
+
+And now you're done.
+
+## Merging
+
+So Timsort also builds off of the merging operation from Merge Sort.
+
+TODO: complete this
+
 # Key characteristics
 
 - Stability: Timsort is stable, it makes sure that the relative order of equal elements remains unchanged during the sorting process. For sorting objects by multiple fields this is extremely important.
@@ -216,22 +304,12 @@ We will run perform each run 100 times to ensure a good sample size.
 
 - Comparison based: Timsort can sort items as long as the object as a notion of an order, that is, for a type $T$, as long as there is a notion that $t_1 > t_2$ for $t_1, t_2 \in T$. This is different from something like Radix Sort or Counting Sort which requires the array to be an array of integers.
 
-# Execution pipeline
-
-This is roughly how Timsort gets executed in plain English:
-
-1. Run Identification: The algorithm scans the array to search for subarrays that are already sorted. If a descending run is detected, it will quickly reverse it to prevent the worst case of Insertion Sort from executing. In our implementation, this is done by the `findRun` method, which returns the start of the run, and the length of the run. 
-
-2. Run Extension: If the algorithm finds that the natural run is shorter than the `minRun`. Timsort will extend it by pulling in adjacent elements using Binary Insertion Sort until the runs reaches the `minRun` threshold.
-
-3. Merge Stack Management: As runs are identified and measured, they are then pushed onto a runs stack. In our case, in order to make debugging easier, we decided to decouple the runs finding and extension stage, from the invariance preserving stack stage, by storing each run inside of a `discoveredRun` array first, which will then be looped through to be pushed to the actual `runStack`. To help maintain the optimal performance, merging is triggered dynamically in order for the `runStack` to maintain two invariants: `s[n - 2] > s[n - 1] + s[n])` and `s[n - 1] > s[n]`. Maintaining this invariance has the property that similar sized subarrays will be merged, making it the most optimal $O(n \log_2 n)$ stack collapsing.
-
-
-
-
 
 # Java implementation
 
+This is roughly how the Timsort algorithm was implemented, first we will give an explanation of each step using plain English, then I will give snippets of the Java implementation related to the specific step described.
+
+1. Run Identification: The algorithm scans the array to search for subarrays that are already sorted. If a descending run is detected, it will quickly reverse it to prevent the worst case of Insertion Sort from executing. In our implementation, this is done by the `findRun` method, which returns the start of the run, and the length of the run. 
 
 ```java
 public Run findRun(T[] arr, int startIndex) {
@@ -259,7 +337,7 @@ public Run findRun(T[] arr, int startIndex) {
 }
 ```
 
-
+2. Run Extension: If the algorithm finds that the natural run is shorter than the `minRun`. Timsort will extend it by pulling in adjacent elements using Binary Insertion Sort until the runs reaches the `minRun` threshold.
 
 
 ```java
@@ -291,6 +369,9 @@ while (runPtr <= arr.length - 1) {
 }
 ```
 
+3. Merge Stack Management: As runs are identified and measured, they are then pushed onto a runs stack. In our case, in order to make debugging easier, we decided to decouple the runs finding and extension stage, from the invariant preserving stack stage, by storing each run inside of a `discoveredRun` array first, which will then be looped through to be pushed to the actual `runStack`. To help maintain the optimal performance, merging is triggered dynamically in order for the `runStack` to maintain two invariants: `s[n - 2] > s[n - 1] + s[n])` and `s[n - 1] > s[n]`. Maintaining this invariant has the property that similar sized subarrays will be merged, making it the most optimal $O(n \log_2 n)$ stack collapsing.
+
+
 ```java
 for (int i = 0; i <= discoveredRunPtr; i++) {
   runStackPtr++;
@@ -299,7 +380,6 @@ for (int i = 0; i <= discoveredRunPtr; i++) {
 }
 mergeForceCollapse(arr);
 ```
-
 
 # Time complexity analysis
 

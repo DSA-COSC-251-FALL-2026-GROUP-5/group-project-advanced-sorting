@@ -120,7 +120,7 @@ Introduction
 
 - [] Algorithm explanation with examples
 - [x] Time complexity analysis
-- [] Java implementation
+- [x] Java implementation
 - [x] Testing methodology
 - [x] Performance results for 5, 1,000, and 1,000,000 elements
 - [x] Comparison with Bubble Sort, Selection Sort, and Insertion Sort

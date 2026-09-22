@@ -251,5 +251,6 @@ In the case that the stack is empty, or there is only one element, the invarianc
 - AI was used to provide some Java syntax 
 - AI was used to discuss high level design decisions for code structure (such as how to structure the classes, and how to record the metrics)
 - AI was used to discuss the implementation of the Tim Sort algorithm
+- AI was not used in the data analysis process
 - AI was not used to write the report
 - AI was not used to write any of the code

@@ -50,11 +50,6 @@ public class TimSort<T> extends Sort<T> {
     // hasn't been modified and do as follows. I think it will actually be fine even
     // when you toggle the sign, it's just that everything will be in reverse order
 
-    // TODO: now we need to find the runs based on whether it's ascending or
-    // descending, perhaps a sign toggle is all we need (also, ascending and
-    // descending is relative on whether we've toggled the sign before, we assume
-    // that ascending and descending is when we haven't toggled the sign)
-
     if (!isAscending) {
       sortMetrics.toggleSign();
     }

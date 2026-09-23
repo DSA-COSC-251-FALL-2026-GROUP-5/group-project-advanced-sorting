@@ -224,7 +224,8 @@ Binary Insertion Sort builds off of a very simple idea:
 
 - suppose that we have a barrier separating the left side of the array from the right side of the array, which is at index $i$ let's say
 - we say that from index 0 to index $i$, the array is sorted. Even if the array isn't sorted at all, when $i = 0$, it is trivially sorted
-- we then move try to increase $i$ by one and then fix the invariant that from index 0 to index $i$, it must be sorted by insertion
+- we then try to move right by increasing $i$ by one and then fix the invariant that from index 0 to index $i$, the list must be sorted
+- this can be done by taking the element at index $i$ and then inserting it in the right place such that the range from index $[0, i]$ is sorted
 - to find where to insert, we use Binary Search, which takes $O(\log_2 (i + 1))$ in this case, and then we insert by first storing the value at $i$ in a temporary variable, then we right shift from the insertion index, then we place that value at the insertion index.
 - we then continue this process until we reach the end of the array.
 
@@ -294,15 +295,185 @@ And now you're done.
 
 So Timsort also builds off of the merging operation from Merge Sort.
 
-TODO: complete this
+The merging operation takes in 2 sorted arrays, and merge them into one array sorted array. 
 
-# Key characteristics
+These two arrays in our case, are neighboring sorted sub-arrays (runs), and when we merge them, we will form another a bigger run. 
 
-- Stability: Timsort is stable, it makes sure that the relative order of equal elements remains unchanged during the sorting process. For sorting objects by multiple fields this is extremely important.
+The idea behind merge-based sorting algorithms is that once our array only have one run left, which was constructed through repeated merging, we will have a sorted array.
 
-- Adaptability: The way that the algorithm adapts to the data exiting structure is so nicely executed. If the segment of the array is already sorted (ascending or descending), it will capitalize on this order to skip redundant comparisons.
+We will go through an example. Suppose that we have 2 sorted array as such:
 
-- Comparison based: Timsort can sort items as long as the object as a notion of an order, that is, for a type $T$, as long as there is a notion that $t_1 > t_2$ for $t_1, t_2 \in T$. This is different from something like Radix Sort or Counting Sort which requires the array to be an array of integers.
+```
+a_1 = [1, 3, 7]
+```
+
+And:
+
+```
+a_2 = [2, 4, 5]
+```
+
+Suppose that we want to merge these two sorted arrays into one array, the array would be of known value, which is `a_1.length + a_2.length`. To do so, we initialize 2 pointers at the start of the array.
+
+
+```
+a_1 = [1, 3, 7]
+       ^
+       |
+  i_1 = 0
+```
+
+and
+
+```
+a_2 = [2, 4, 5]
+       ^
+       |
+  i_2 = 0
+```
+
+While our final array will empty with its own pointer too:
+
+```
+a = [null, null, null, null, null, null]
+      ^
+      |
+    i = 0
+```
+
+We then compare `a_1[i_1]` with `a_2[i_2]`. Which ever one is smaller, we insert it into our new array `a` and index `i`, and then we increment `i++` and also increment the pointer of the array whose value was smaller.
+
+For our particular example, we see that `a_1[0] < a_2[0]`, as such, we insert `a_[0]` into our new array at index `i = 0`, and then increment both `i` and `i_1` by one.
+
+```
+a = [1, null, null, null, null, null]
+         ^
+         |
+       i = 1
+
+
+a_1 = [1, 3, 7]
+          ^
+          |
+        i_1 = 2
+
+
+a_2 = [2, 4, 5]
+       ^
+       |
+  i_2 = 0
+```
+
+Now we repeat this process until we reach the end of one of the array.
+
+```
+a = [1, 2, null, null, null, null]
+            ^
+            |
+          i = 2
+
+
+a_1 = [1, 3, 7]
+          ^
+          |
+        i_1 = 2
+
+
+a_2 = [2, 4, 5]
+          ^
+          |
+     i_2 = 0
+```
+
+Then:
+
+```
+a = [1, 2, 3, null, null, null]
+               ^
+               |
+             i = 3
+
+
+a_1 = [1, 3, 7]
+             ^
+             |
+           i_1 = 2
+
+
+a_2 = [2, 4, 5]
+          ^
+          |
+     i_2 = 1
+```
+
+Next:
+
+```
+a = [1, 2, 3, 4, null, null]
+                  ^
+                  |
+                i = 4
+
+
+a_1 = [1, 3, 7]
+             ^
+             |
+           i_1 = 2
+
+
+a_2 = [2, 4, 5]
+             ^
+             |
+        i_2 = 2
+```
+
+Next:
+
+```
+a = [1, 2, 3, 4, 5, null]
+                      ^
+                      |
+                    i = 5
+
+
+a_1 = [1, 3, 7]
+             ^
+             |
+           i_1 = 2
+
+
+a_2 = [2, 4, 5]
+                ^
+                |
+           i_2 = 3
+```
+
+Notice that $a_2$ has reached the end of the array. If we were to try to index $a_2$ at $i_2 = 3$, we would get an error, as such, we should detect it and terminate out of our loop.
+
+After one of the array has reached the end, we can simply take the "tail" of the array whose index hasn't reached the end and append it into our new array `a`. In this case, we just append `a_1[2]` to the end of the array.
+
+```
+a = [1, 2, 3, 4, 5, 7]
+                       ^
+                       |
+                     i = 6
+
+
+a_1 = [1, 3, 7]
+                ^
+                |
+              i_1 = 3
+
+
+a_2 = [2, 4, 5]
+                ^
+                |
+           i_2 = 3
+```
+
+Finally, we terminate and now, we have a sorted array `a`.
+
+Notice that every loop, we must traverse through all of `a_1` and `a_2`, as such, it would take `O(a_1.length + a_2.length)` time.
 
 
 # Java implementation
@@ -380,6 +551,15 @@ for (int i = 0; i <= discoveredRunPtr; i++) {
 }
 mergeForceCollapse(arr);
 ```
+
+# Key characteristics
+
+- Stability: Timsort is stable, it makes sure that the relative order of equal elements remains unchanged during the sorting process. For sorting objects by multiple fields this is extremely important.
+
+- Adaptability: The way that the algorithm adapts to the data exiting structure is so nicely executed. If the segment of the array is already sorted (ascending or descending), it will capitalize on this order to skip redundant comparisons.
+
+- Comparison based: Timsort can sort items as long as the object as a notion of an order, that is, for a type $T$, as long as there is a notion that $t_1 > t_2$ for $t_1, t_2 \in T$. This is different from something like Radix Sort or Counting Sort which requires the array to be an array of integers.
+
 
 # Time complexity analysis
 

@@ -93,6 +93,9 @@ public class TimSort<T> extends Sort<T> {
 
   void mergeBottomTwoRun(T arr[]) {
     // merges s[n - 1] with s[n - 2] and then updates the runStack
+    // NOTE: mergeBottomTwoRun is a bit of a misnomer, because we're saying that
+    // we're merging the bottom 2 when we use index n - 1 as a base line, not that
+    // we're merging the bottom 2 of the stack
     sortMetrics.merge(arr,
         tmpArr,
         runStack[runStackPtr - 2].startIndex(),
@@ -250,13 +253,6 @@ public class TimSort<T> extends Sort<T> {
 
       // reverse it if it's in descending order
       if (!run.isAscending()) {
-        /*
-         * System.out.println("reversing... our subarray is: ");
-         * for (int i = runPtr; i <= endIndex; i++) {
-         * System.out.printf("%d, ", arr[i]);
-         * }
-         * System.out.println();
-         */
         sortMetrics.reverse(arr, runPtr, endIndex);
         run = new Run(run.startIndex(), run.length(), true);
       }
@@ -268,30 +264,14 @@ public class TimSort<T> extends Sort<T> {
       discoveredRun[discoveredRunPtr] = run;
     }
 
-    /*
-     * for (int i = 0; i <= discoveredRunPtr; i++) {
-     * System.out.println(discoveredRun[i]);
-     * }
-     */
-
-    // System.out.println(Arrays.toString(arr));
-
     // now we're in the mergeCollapse stage, where we begin pushing things into the
     // runStack, while preserving our invariance
-
-    // System.out.println(Arrays.toString(discoveredRun));
 
     for (int i = 0; i <= discoveredRunPtr; i++) {
       runStackPtr++;
       runStack[runStackPtr] = discoveredRun[i];
       mergeCollapse(arr);
     }
-
-    /*
-     * for (int i = 0; i <= runStackPtr; i++) {
-     * System.out.println(runStack[i]);
-     * }
-     */
 
     mergeForceCollapse(arr);
 

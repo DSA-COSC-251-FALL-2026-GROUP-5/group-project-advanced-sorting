@@ -475,6 +475,209 @@ Finally, we terminate and now, we have a sorted array `a`.
 
 Notice that every loop, we must traverse through all of `a_1` and `a_2`, as such, it would take `O(a_1.length + a_2.length)` time.
 
+## Timsort
+
+Timsort revolves around those 2 operations, although, there are additional logic to decide when it should perform Insertion Sort on the sub-arrays, and when it should perform merging.
+
+In a higher-level overview, Timsort aims to find natural runs, and if the run is smaller than `minRun`, it aims to extend the run to length `minRun` using Insertion Sort. The reason why Insertion Sort is used, I presume, is because when extending the run, Insertion Sort can already take advantage of the already sorted run to the left of it, making it do less work. Afterwards, it will then merge those runs such that the run stack maintains an invariant.
+
+### Run finding
+
+Let's have an example. Suppose that we choose that `minRun = 3`, and we have the following array:
+
+```
+a = [1, 2, 3, 4, 1, 2, 1, 2]
+```
+
+The following will be considered a run:
+
+```
+a = [1, 2, 3, 4, 1, 2, 1, 2]
+    [1, 2, 3, 4]
+        ^
+        |
+       r_1
+```
+
+And we won't extend it to `minRun` because it's already bigger than `minRun = 3`. So now we search for the next run.
+
+```
+a = [1, 2, 3, 4, 1, 2, 1, 2]
+    [1, 2, 3, 4][1, 2]
+        ^         ^
+        |         |
+       r_1       r_2
+```
+
+Now we see that `r_2.length < minRun` for `minRun = 3` and `r_2.length = 2`. As such, we need to extend it to `r_3` as such:
+
+```
+a = [1, 2, 3, 4, 1, 2, 1, 2]
+    [1, 2, 3, 4][1, 2, 1]
+        ^         ^
+        |         |
+       r_1       r_2
+```
+
+However, it isn't sorted, which is where we use Binary Insertion Sort to sort it.
+
+```
+a = [1, 2, 3, 4, 1, 2, 1, 2]
+    [1, 2, 3, 4][1, 1, 2]
+        ^          ^
+        |          |
+       r_1        r_2
+```
+
+Now we're left with the final run of length 1. Even though we would like to extend it to `minRun = 3`, we need to detect that we're at the boundary of the array, as such, we can only make a run of length `1`.
+
+
+```
+a = [1, 2, 3, 4, 1, 2, 1, 2]
+    [1, 2, 3, 4][1, 1, 2][2]
+        ^          ^      ^
+        |          |      |
+       r_1        r_2    r_3
+```
+
+### Merging phase
+
+The next step in Timsort is the merging phase. Although Timsort's merging phase can run as we find runs on the go, we think it's conceptually easier to split the two phases, even at the cost of efficiency.
+
+Let's suppose we store the runs in an array. We can either store the content of the arrays themselves, or just the metadata which includes the starting index of the of the run, and how long the run is. In implementation it's more efficient to store just the metadata rather than the sub-arrays themselves.
+
+Going from the earlier example, let's say that we have an array that stores the runs that we found, and that we extended, call it `r`.
+
+```
+r = [r_1, r_2, r_3]
+```
+
+What we now need to do now is pop each one of them from the front sequentially from the start to the end, and then added to something called a `runStack`. To re-iterate, we actually do not need this auxilary array `r`, and we can just pop it in to `runStack` as we find them, but, we believe it's better, conceptually, to split it into two steps. I will abbreviate `runStack` to `rs` to not clutter things up.
+
+So, this `runStack` isn't an ordinary stack, it is stack that must preserve 2 invariants as follows. If we push onto the stack from the end, where $n$ is the index of the end of the stack, then:
+
+The first invariant states:
+
+```
+rs[n].length + rs[n - 1].length < rs[n - 2].length
+```
+
+And, the second invariant states:
+
+```
+rs[n].length < rs[n - 1].length
+```
+
+I will abbreviate `rs[n].length` to `rsl[n]`.
+
+When `n - 2` or `n - 1` is out of bound, then we simply state that the invariants are followed trivially, such as for edge cases when the `rs.length <= 1`. Meanwhile, when `rs.length == 2`, then we only need the second invariant to follow.
+
+So, we every time we pop an element out of `r` (from the start), we push it onto `rs`, and then repair the invariant.
+
+If `rs` already has the invariants, when we push another run onto `rs` (which may break the invariant), then in order to preserve the invariant, we can follow the following procedure:
+
+Let's say that we've pushed a new run into `rs`. And we can assume that `rs` follows the invariants from index `0` to index `n - 1` (inclusive). There are a couple of cases when the invariant isn't met. The index of the diagrams below goes from `0` to `n` from the bottom, upwards.
+
+A stack with the invariants met looks like this:
+
+```
+#####                    ^ n
+########                 |
+################         | 0
+```
+
+The invariant is met because it can be verified that , `rsl[n] + rsl[n - 1] < rsl[n - 2] `, and `rsl[n] < rsl[n - 1]`.
+
+Now, there are a few cases that might happen when we add a new run:
+
+1.  first invariant met and second invariant met
+
+2.  first invariant not met and second invariant met
+
+3.  first invariant met and second invariant not met
+
+4.  first invariant not met and second invariant not met
+
+For the first case, it is simple because all of our invariants are met and we can continue. For the diagram above, that would happen if we discovered a run  and append it as such:
+
+```
+##
+#####
+########
+################
+```
+
+The second case may happen when we append something like this:
+
+```
+####
+#####
+########
+################
+```
+
+Notice that the first invariant isn't met, but the second invariant is met. In such a case, we would want to merge `rs[n - 1]` with the smaller of  `rsl[n]` or `rsl[n - 2]`. Notice also that when we perform the merge, it would not guarantee that the invariant is automatically repaired, however, it would still guarantee that the bottom invariants from `n - 2` downwards (after we perform the merge) must still be met, because we haven't merged them in. As such, we can repeatedly go through our routine until we find that the invariants are met for the top 3, which would already mean that the invariants are already preserved from the bottom down. A more rigorous proof of this might be necessary, however, we will just assume that it can be experimentally verified, and that it is correct.
+
+In our case, we will merge `rs[n - 1]` with `rs[n]` because it's smaller.
+
+```
+#########
+########
+################
+```
+
+Notice that the invariants actually aren't met, in fact, we're now in case 4, because, not only is the first invariant not met, the second invariant isn't met either. In such a case, we see that the first invariant isn't met, so we don't need to worry too much about the second invariant, as such, we would perform the same procedure in case 2. In our case, we sill merge `rs[n]` with `rs[n - 1]` (note that `n` gets updated behind the scenes when we merge, and will always refer to the index of the top of the stack)
+
+```
+#################
+################
+```
+
+Now that we have `rs.length == 2`, we say that the first invariant is already automatically met, as such, we only care about the second invariant. When the second invariant is violated, but the first invariant isn't violated (case 3), we merge `rs[n]` with `rs[n - 1]`.
+
+```
+#################################
+```
+
+When `rs.length <= 1`, we say that the stack invariants are automatically met, and we can then continue onto the pushing of the next element off of `r`, and we repeat until `r` is exhausted. Notice that experimentally from the example above, whenever we perform the merge, we tend to merge arrays of similar sizes, which is another property which makes Timsort behave in an $O(n \log_2 n)$ manner. Essentially, when we merge arrays that are disproportionate in size, the algorithm would perform in an somewhat quadratic manner, which can be seen in Insertion Sort, because, Insertion Sort can be thought of as a repeated merging of subarrays as such:
+
+- assume that the subarray from `[0, i - 1]` is sorted
+- the subarray from `[i, i]` is trivially sorted
+- merge those two sub arrays to from a new subarray from `[0, i]`
+- increment `i` by one and repreat this process
+
+Because we're Insertion Sort can be thought of as the worst case scenario for merge-based algorithms, it gives a stronger justification that to merge things efficiently, one must merge subarrays of similar sizes. In our implementation (and in Java's implementation), the process of fixing the stack invariants is called the `mergeCollapse` operation.
+
+After we've exhausted the array of runs we've discovered, we essentially have a run stack `rs` that follows the invariant, which may perhaps look something like this:
+
+```
+#########
+#################
+#################################
+```
+
+The next step is to now merge it into one continuous run. However, notice that the length of the runs in the stack is increasing when moving from `n` to `0`, and furthermore, it is usually the case that it is "Fibonacci-like" when merging, that is, `sum(rsl[i:n])` $\approx$ `rsl[i])`. This can be empirically shown, however, we don't have any theoretical understand why this might happen, only that because `rsl[i + 2] + rsl[i + 1] < rsl[i]`, and the invariant is preserved upwards, the `rsl[i + 3]` term and onwards are becoming smaller and smaller compared to the region around `rsl[i]`, making their sum `rsl[i:n]` approximately `rsl[i]`. This makes it the most optimal for merging, where merging is performed by merging the top 2 runs every time, in the case above:
+
+```
+#########
+#################
+#################################
+```
+
+Which gets merged into:
+
+```
+##########################
+#################################
+```
+
+Which then gets merged into:
+
+```
+###########################################################
+```
+
+Once we only have one run left in the stack, then we can say that the array is sorted.
 
 # Java implementation
 

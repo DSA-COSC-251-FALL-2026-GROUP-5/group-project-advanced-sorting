@@ -681,38 +681,36 @@ Once we only have one run left in the stack, then we can say that the array is s
 
 # Java implementation
 
-This is roughly how the Timsort algorithm was implemented, first we will give an explanation of each step using plain English, then I will give snippets of the Java implementation related to the specific step described.
+## Code structure
 
-1. Run Identification: The algorithm scans the array to search for subarrays that are already sorted. If a descending run is detected, it will quickly reverse it to prevent the worst case of Insertion Sort from executing. In our implementation, this is done by the `findRun` method, which returns the start of the run, and the length of the run. 
+For the code structure, we have a few notable classes:
+
+1. `SortMetrics`: `SortMetrics` essentially implements all of the utility functions used by all of the different sorting algorithms such as swapping, comparisons, right shifts, merges
+2. `Sort`: `Sort` is an abstract base class that all sorting algorithm use as a template, so that we can in order to make it easier. The `Sort` template requires a `.sort` method, which will be inherited by all sorting algorithms to be implemented.
+3. `TimSort`: the `TimSort` class (and all of the other sorting algorithms) inherrits from the `Sort` base class and needs to implement their own sorting machinery. The sorting algorithms will use utility functions from the `SortMetrics` instance in order to log the neccesary metrics of interest (such as the number of swaps, copies, comparisons, etc).
+
+## Usage
+
+In side of `Main.java` we can use our algorithm as such:
 
 ```java
-public Run findRun(T[] arr, int startIndex) {
-  int currentIndex = startIndex;
-  while ((currentIndex <= (arr.length - 2))
-      && (sortMetrics.comparator.compare(arr[currentIndex], arr[currentIndex + 1]) == 0)) {
-    currentIndex++;
+class Main {
+  public static void main(String[] args) {
+    SortMetrics<Integer> sortMetrics = new SortMetrics<Integer>(Integer::compare);
+    Integer arr[] = { 3, 4, 5, 17, 100, 1, 222, 2, 2, 2 };
+    sortMetrics.runSort(arr, new TimSort<Integer>(sortMetrics, 32, new Integer[arr.length]));
+    System.out.println(sortMetrics.getResultsAsJson());
+    sortMetrics.writeToFile("saved_output/saved.json");
+    sortMetrics.resetMetrics();
   }
-  if (currentIndex == arr.length - 1) {
-    return new Run(startIndex, currentIndex - startIndex + 1, true);
-  }
-  boolean isAscending;
-  isAscending = sortMetrics.comparator.compare(arr[currentIndex + 1], arr[currentIndex]) > 0;
-  if (!isAscending) {
-    sortMetrics.toggleSign();
-  }
-  while ((currentIndex <= (arr.length - 2))
-      && (sortMetrics.comparator.compare(arr[currentIndex + 1], arr[currentIndex]) >= 0)) {
-    currentIndex++;
-  }
-  if (!isAscending) {
-    sortMetrics.toggleSign();
-  }
-  return new Run(startIndex, currentIndex - startIndex + 1, isAscending);
 }
 ```
 
-2. Run Extension: If the algorithm finds that the natural run is shorter than the `minRun`. Timsort will extend it by pulling in adjacent elements using Binary Insertion Sort until the runs reaches the `minRun` threshold.
+## Timsort implemenation
 
+First we will give an explanation of each step using plain English, then I will give snippets of the Java implementation related to the specific step described.
+
+1. Run Identification and Run Extension: The algorithm scans the array to search for subarrays that are already sorted. If a descending run is detected, it will quickly reverse it to prevent the worst case of Insertion Sort from executing. In our implementation, this is done by the `findRun` method, which returns the start of the run, and the length of the run. If the algorithm finds that the natural run is shorter than the `minRun`. Timsort will extend it by pulling in adjacent elements using Binary Insertion Sort until the runs reaches the `minRun` threshold.
 
 ```java
 InsertionSort<T> insertionSort = new InsertionSort<T>(sortMetrics);
@@ -743,8 +741,7 @@ while (runPtr <= arr.length - 1) {
 }
 ```
 
-3. Merge Stack Management: As runs are identified and measured, they are then pushed onto a runs stack. In our case, in order to make debugging easier, we decided to decouple the runs finding and extension stage, from the invariant preserving stack stage, by storing each run inside of a `discoveredRun` array first, which will then be looped through to be pushed to the actual `runStack`. To help maintain the optimal performance, merging is triggered dynamically in order for the `runStack` to maintain two invariants: `s[n - 2] > s[n - 1] + s[n])` and `s[n - 1] > s[n]`. Maintaining this invariant has the property that similar sized subarrays will be merged, making it the most optimal $O(n \log_2 n)$ stack collapsing.
-
+2. Merge collapse: As runs are identified and measured, they are then pushed onto a runs stack. In our case, in order to make debugging easier, we decided to decouple the runs finding and extension stage, from the invariant preserving stack stage, by storing each run inside of a `discoveredRun` array first, which will then be looped through to be pushed to the actual `runStack`. To help maintain the optimal performance, merging is triggered dynamically in order for the `runStack` to maintain two invariants: `s[n - 2] > s[n - 1] + s[n])` and `s[n - 1] > s[n]`. Maintaining this invariant has the property that similar sized subarrays will be merged, making it the most optimal $O(n \log_2 n)$ stack collapsing.
 
 ```java
 for (int i = 0; i <= discoveredRunPtr; i++) {
@@ -752,6 +749,11 @@ for (int i = 0; i <= discoveredRunPtr; i++) {
   runStack[runStackPtr] = discoveredRun[i];
   mergeCollapse(arr);
 }
+```
+
+3. Merge Force Collapse: the `mergeForceCollapse` stage of the Timsort algorithm essentially takes a `runStack` that's is guaranteed to follow the 2 invariants and will merge everything in the stack from the top down until we have just one run left, which will be our final sorted array.
+
+```java
 mergeForceCollapse(arr);
 ```
 
@@ -844,7 +846,7 @@ So the leading term is $n \log_2(n)$, as such, the algorithm is $O(n \log_2(n))$
 
 In the case of Insertion Sort, we know that the worst case happens precisely when the array is in descending order, because, it would need to perform $n - 1$ right shifts, and then $n - 2$ right shifts, and then $n - 3$ right shifts... which amounts to $C\frac{n (n - 1)}{n}$ (plus binary search, which is $O(\log_2(n))$, which is a lower order term so we ignore it) which is $O(n^2)$.
 
-Timsort isn't naive, in that it has mechanisms to detect descending runs and then reverse them accordingly, preventing the worst case of Insertion Sort from affecting it. This makes analyzing the worst case for Timsort quite difficult. As such I will refer to a paper that analyzed the Worst-case complexity of Timsort by Nicholas Auger, et al. [^3]
+Timsort isn't naive, in that it has mechanisms to detect descending runs and then reverse them accordingly, preventing the worst case of Insertion Sort from affecting it. This makes analyzing the worst case for Timsort quite difficult. As such we will refer to a paper that analyzed the Worst-case complexity of Timsort by Nicholas Auger, et al. [^3]
 
 In the abstract, it is stated that for Python's particular implemenation of Timsort, it generally runs in:
 
@@ -886,7 +888,7 @@ The space complexity of this algorithm is $O(n)$ because we need to initialize a
 
 It is important to note that Bubble sort, Selection sort can have a best case of $O(n^2)$ for sorted array if we implement early breaking mechanisms such as, if there has been no swaps since we've swept through the array, we break, although, the naive implementation (which is what we implemented) would run in $O(n^2)$ even for an already sorted array
 
-# Performance results
+# Performance results and comparison with other algorithms
 
 Note that the $\pm$ uncertainty range is in terms of the sample standard deviation $\sigma$. If we assume that it's normally distributed, we can estimate that $99.7\%$ of the sample falls in between $\mu \pm 3 \sigma$, where $\mu$ is the sample mean. If we remain conservative and assume that the data is of an arbitrary distribution, Chebyshev's theorem gives us that $99\%$ of the samples must fall in between the range of $\mu \pm 10 \sigma$.
 

@@ -66,7 +66,7 @@ In the page, you can click on the `data_analysis.py` notebook to view it.
 
 ## Using the sorting interface
 
-So, in `Main.java` you can access all of the classes in the `*Sort.java` files. The code to run a simple Bubble Sort in `Main.java` for integers is as follows:
+So, in `Main.java` you can access all of the classes in the `*Sort.java` files. The code to run Timsort in `Main.java` for integers is as follows:
 
 ```java
 class Main {
